@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rekap & Laporan - AmilDesk</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <style>
+        .report-section {
+            margin-top: 32px;
+        }
+        .report-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        .tabs-header {
+            display: flex;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 16px;
+        }
+        .tab-btn {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: var(--transition-fast);
+        }
+        .tab-btn.active {
+            color: var(--primary-dark);
+            border-bottom-color: var(--primary-color);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <div id="sidebar-placeholder"></div>
+        
+        <div class="main-content">
+            <div id="header-placeholder"></div>
+            
+            <div class="content-body">
+                <!-- Filter Section Card -->
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 20px;">
+                        
+                        <!-- Inputs -->
+                        <div style="display: flex; gap: 16px; align-items: center; flex-grow: 1;">
+                            <div class="form-group" style="margin-bottom: 0; min-width: 180px;">
+                                <label for="filter-type">Rentang Laporan</label>
+                                <select id="filter-type" class="form-control">
+                                    <option value="all">Seluruh Data (Tanpa Filter)</option>
+                                    <option value="harian">Harian</option>
+                                    <option value="bulanan">Bulanan</option>
+                                    <option value="tahunan">Tahunan</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group" id="container-input-harian" style="margin-bottom: 0; display: none;">
+                                <label for="input-harian">Pilih Tanggal</label>
+                                <input type="date" id="input-harian" class="form-control">
+                            </div>
+
+                            <div class="form-group" id="container-input-bulanan" style="margin-bottom: 0; display: none;">
+                                <label for="input-bulanan">Pilih Bulan</label>
+                                <input type="month" id="input-bulanan" class="form-control">
+                            </div>
+
+                            <div class="form-group" id="container-input-tahunan" style="margin-bottom: 0; display: none;">
+                                <label for="input-tahunan">Pilih Tahun</label>
+                                <select id="input-tahunan" class="form-control">
+                                    <!-- Populated dynamically via JS -->
+                                </select>
+                            </div>
+                            
+                            <button class="btn btn-primary" id="btn-tampilkan-laporan" style="margin-top: 20px;">
+                                Tampilkan Laporan
+                            </button>
+                        </div>
+                        
+                        <!-- Export Actions -->
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-secondary" id="btn-ekspor-excel" disabled>
+                                Ekspor Excel
+                            </button>
+                            <button class="btn btn-secondary" id="btn-ekspor-pdf" disabled>
+                                Ekspor PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Summary Section -->
+                <div id="report-result-area" style="display: none;">
+                    
+                    <!-- Metric Cards -->
+                    <div class="stats-grid">
+                        <!-- Pemasukan -->
+                        <div class="stat-card" style="border-top: 3px solid var(--info-color);">
+                            <div class="stat-icon blue">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-label">Pemasukan Uang (Periode Ini)</div>
+                                <div class="stat-value" id="val-uang-masuk">Rp0</div>
+                                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                                    Beras Masuk: <strong id="val-beras-masuk" style="color: var(--text-primary);">0 kg</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pengeluaran -->
+                        <div class="stat-card" style="border-top: 3px solid var(--warning-color);">
+                            <div class="stat-icon orange">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-label">Distribusi Uang (Periode Ini)</div>
+                                <div class="stat-value" id="val-uang-keluar">Rp0</div>
+                                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                                    Beras Keluar: <strong id="val-beras-keluar" style="color: var(--text-primary);">0 kg</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Saldo Akhir -->
+                        <div class="stat-card" style="border-top: 3px solid var(--primary-color);">
+                            <div class="stat-icon green">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-label">Saldo Kas Uang (Saat Ini)</div>
+                                <div class="stat-value" id="val-saldo-uang">Rp0</div>
+                                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                                    Stok Beras: <strong id="val-saldo-beras" style="color: var(--text-primary);">0 kg</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Details Area tabs -->
+                    <div class="card" style="padding: 20px;">
+                        <div class="tabs-header">
+                            <button class="tab-btn active" onclick="switchTab('tab-pemasukan')">Pemasukan Zakat (Transaksi)</button>
+                            <button class="tab-btn" onclick="switchTab('tab-distribusi')">Distribusi Zakat (Penyaluran)</button>
+                        </div>
+                        
+                        <!-- Tab: Pemasukan -->
+                        <div class="tab-content active" id="tab-pemasukan">
+                            <div class="table-container">
+                                <table class="data-table" id="table-pemasukan">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 60px;">No</th>
+                                            <th>Tanggal</th>
+                                            <th>Nama Muzakki</th>
+                                            <th>Jenis Zakat</th>
+                                            <th style="text-align: right;">Jiwa</th>
+                                            <th style="text-align: right;">Uang</th>
+                                            <th style="text-align: right;">Beras</th>
+                                            <th>Keterangan</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Tab: Distribusi -->
+                        <div class="tab-content" id="tab-distribusi">
+                            <div class="table-container">
+                                <table class="data-table" id="table-distribusi">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 60px;">No</th>
+                                            <th>Tanggal</th>
+                                            <th>Nama Mustahik</th>
+                                            <th>Kategori (Asnaf)</th>
+                                            <th>Jenis Zakat</th>
+                                            <th style="text-align: right;">Uang</th>
+                                            <th style="text-align: right;">Beras</th>
+                                            <th>Keterangan</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Scripts -->
+    <script src="../assets/js/common.js"></script>
+    <script>
+        let currentReportData = null;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            // Setup years selection (current year and 5 years back)
+            const currentYear = new Date().getFullYear();
+            const yearSelect = document.getElementById('input-tahunan');
+            for (let i = 0; i < 6; i++) {
+                const opt = document.createElement('option');
+                opt.value = currentYear - i;
+                opt.innerText = currentYear - i;
+                yearSelect.appendChild(opt);
+            }
+            
+            // Set input defaults
+            const todayStr = new Date().toISOString().split('T')[0];
+            document.getElementById('input-harian').value = todayStr;
+            document.getElementById('input-bulanan').value = todayStr.substring(0, 7);
+            
+            // Filter type toggle listener
+            document.getElementById('filter-type').addEventListener('change', handleFilterTypeChange);
+            
+            // Load button
+            document.getElementById('btn-tampilkan-laporan').addEventListener('click', fetchReportData);
+            
+            // Export actions
+            document.getElementById('btn-ekspor-excel').addEventListener('click', exportToExcel);
+            document.getElementById('btn-ekspor-pdf').addEventListener('click', exportToPDF);
+        });
+
+        function handleFilterTypeChange() {
+            const filterType = document.getElementById('filter-type').value;
+            
+            document.getElementById('container-input-harian').style.display = filterType === 'harian' ? 'block' : 'none';
+            document.getElementById('container-input-bulanan').style.display = filterType === 'bulanan' ? 'block' : 'none';
+            document.getElementById('container-input-tahunan').style.display = filterType === 'tahunan' ? 'block' : 'none';
+        }
+        
+        async function fetchReportData() {
+            const filterType = document.getElementById('filter-type').value;
+            let dateValue = '';
+            
+            if (filterType === 'harian') dateValue = document.getElementById('input-harian').value;
+            else if (filterType === 'bulanan') dateValue = document.getElementById('input-bulanan').value;
+            else if (filterType === 'tahunan') dateValue = document.getElementById('input-tahunan').value;
+            
+            showLoading(true);
+            try {
+                const res = await window.api.getReportData({ filterType, dateValue });
+                showLoading(false);
+                
+                if (res.success) {
+                    currentReportData = res.data;
+                    renderReport();
+                } else {
+                    showToast('Gagal menarik data laporan: ' + res.message, 'error');
+                }
+            } catch (err) {
+                showLoading(false);
+                showToast('Kesalahan memuat laporan: ' + err.message, 'error');
+            }
+        }
+        
+        function renderReport() {
+            if (!currentReportData) return;
+            
+            const summary = currentReportData.summary;
+            
+            // Update stats cards
+            document.getElementById('val-uang-masuk').innerText = formatIDR(summary.uangMasuk);
+            document.getElementById('val-beras-masuk').innerText = formatBeras(summary.berasMasuk);
+            
+            document.getElementById('val-uang-keluar').innerText = formatIDR(summary.uangKeluar);
+            document.getElementById('val-beras-keluar').innerText = formatBeras(summary.berasKeluar);
+            
+            document.getElementById('val-saldo-uang').innerText = formatIDR(summary.currentUang);
+            document.getElementById('val-saldo-beras').innerText = formatBeras(summary.currentBeras);
+            
+            // Populate Pemasukan Table
+            const trxBody = document.querySelector('#table-pemasukan tbody');
+            trxBody.innerHTML = '';
+            if (currentReportData.transaksi.length === 0) {
+                trxBody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 20px;">Tidak ada pemasukan zakat periode ini.</td></tr>`;
+            } else {
+                currentReportData.transaksi.forEach((t, i) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${i + 1}</td>
+                        <td>${formatDate(t.tanggal)}</td>
+                        <td style="font-weight: 600;">${t.muzakki_nama || 'Umum'}</td>
+                        <td><span class="badge badge-green">${t.jenis_zakat}</span></td>
+                        <td style="text-align: right; font-variant-numeric: tabular-nums;">${t.jumlah_jiwa || 0}</td>
+                        <td style="text-align: right; font-weight: 600; font-variant-numeric: tabular-nums;">${t.jumlah_uang > 0 ? formatIDR(t.jumlah_uang) : '-'}</td>
+                        <td style="text-align: right; font-weight: 600; font-variant-numeric: tabular-nums;">${t.jumlah_beras > 0 ? formatBeras(t.jumlah_beras) : '-'}</td>
+                        <td>${t.keterangan || '-'}</td>
+                    `;
+                    trxBody.appendChild(tr);
+                });
+            }
+            
+            // Populate Distribusi Table
+            const distBody = document.querySelector('#table-distribusi tbody');
+            distBody.innerHTML = '';
+            if (currentReportData.distribusi.length === 0) {
+                distBody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 20px;">Tidak ada penyaluran zakat periode ini.</td></tr>`;
+            } else {
+                currentReportData.distribusi.forEach((d, i) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${i + 1}</td>
+                        <td>${formatDate(d.tanggal)}</td>
+                        <td style="font-weight: 600;">${d.mustahik_nama || 'Umum'}</td>
+                        <td><span class="badge badge-green">${d.mustahik_kategori || 'Umum'}</span></td>
+                        <td><span class="badge badge-orange">${d.jenis_zakat}</span></td>
+                        <td style="text-align: right; font-weight: 600; font-variant-numeric: tabular-nums;">${d.jumlah_uang > 0 ? formatIDR(d.jumlah_uang) : '-'}</td>
+                        <td style="text-align: right; font-weight: 600; font-variant-numeric: tabular-nums;">${d.jumlah_beras > 0 ? formatBeras(d.jumlah_beras) : '-'}</td>
+                        <td>${d.keterangan || '-'}</td>
+                    `;
+                    distBody.appendChild(tr);
+                });
+            }
+            
+            // Enable export buttons
+            document.getElementById('btn-ekspor-excel').disabled = false;
+            document.getElementById('btn-ekspor-pdf').disabled = false;
+            
+            // Display container
+            document.getElementById('report-result-area').style.display = 'block';
+        }
+        
+        function switchTab(tabId) {
+            // Remove active classes
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            // Find current triggers
+            const btn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
+            if (btn) btn.classList.add('active');
+            
+            document.getElementById(tabId).classList.add('active');
+        }
+        
+        async function exportToExcel() {
+            if (!currentReportData) return;
+            
+            const filterType = document.getElementById('filter-type').value;
+            let dateValue = '';
+            if (filterType === 'harian') dateValue = document.getElementById('input-harian').value;
+            else if (filterType === 'bulanan') dateValue = document.getElementById('input-bulanan').value;
+            else if (filterType === 'tahunan') dateValue = document.getElementById('input-tahunan').value;
+            
+            showLoading(true);
+            try {
+                const res = await window.api.exportExcel({ filterType, dateValue, reportData: currentReportData });
+                showLoading(false);
+                if (res.success) {
+                    showToast('Laporan Excel berhasil disimpan di: ' + res.filePath, 'success');
+                } else {
+                    showToast(res.message, 'error');
+                }
+            } catch (err) {
+                showLoading(false);
+                showToast('Gagal ekspor Excel: ' + err.message, 'error');
+            }
+        }
+        
+        async function exportToPDF() {
+            if (!currentReportData) return;
+            
+            const filterType = document.getElementById('filter-type').value;
+            let dateValue = '';
+            if (filterType === 'harian') dateValue = formatDate(document.getElementById('input-harian').value);
+            else if (filterType === 'bulanan') dateValue = document.getElementById('input-bulanan').value;
+            else if (filterType === 'tahunan') dateValue = document.getElementById('input-tahunan').value;
+            else dateValue = 'Seluruh Periode';
+            
+            // Compile PDF HTML content body
+            const summary = currentReportData.summary;
+            let html = `
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h1>AmilDesk - Laporan Rekapitulasi Zakat</h1>
+                    <div class="meta">Filter Laporan: <strong>${filterType.toUpperCase()} (${dateValue})</strong> &bull; Cetak: <strong>${new Date().toLocaleString('id-ID')}</strong></div>
+                </div>
+                
+                <h2>Ringkasan Keuangan & Stok</h2>
+                <div class="summary-cards">
+                    <div class="card">
+                        <div class="card-title">Pemasukan Uang</div>
+                        <div class="card-val">${formatIDR(summary.uangMasuk)}</div>
+                        <div style="font-size: 8px; color: #64748b; margin-top: 3px;">Pemasukan Beras: ${formatBeras(summary.berasMasuk)}</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Penyaluran Uang</div>
+                        <div class="card-val">${formatIDR(summary.uangKeluar)}</div>
+                        <div style="font-size: 8px; color: #64748b; margin-top: 3px;">Penyaluran Beras: ${formatBeras(summary.berasKeluar)}</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Sisa Saldo Kas</div>
+                        <div class="card-val" style="color: #047857;">${formatIDR(summary.currentUang)}</div>
+                        <div style="font-size: 8px; color: #64748b; margin-top: 3px;">Sisa Stok Beras: ${formatBeras(summary.currentBeras)}</div>
+                    </div>
+                </div>
+                
+                <h2>Rincian Penerimaan Zakat (Pemasukan)</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 30px;">No</th>
+                            <th style="width: 70px;">Tanggal</th>
+                            <th>Nama Muzakki</th>
+                            <th>Jenis Zakat</th>
+                            <th style="width: 40px;" class="text-right">Jiwa</th>
+                            <th class="text-right">Uang</th>
+                            <th class="text-right">Beras</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            if (currentReportData.transaksi.length === 0) {
+                html += `<tr><td colspan="7" style="text-align: center; color: #64748b;">Tidak ada transaksi pemasukan zakat.</td></tr>`;
+            } else {
+                currentReportData.transaksi.forEach((t, i) => {
+                    html += `
+                        <tr>
+                            <td>${i + 1}</td>
+                            <td>${formatDate(t.tanggal)}</td>
+                            <td><strong>${t.muzakki_nama || 'Umum'}</strong></td>
+                            <td>${t.jenis_zakat}</td>
+                            <td class="text-right">${t.jumlah_jiwa || 0}</td>
+                            <td class="text-right">${t.jumlah_uang > 0 ? formatIDR(t.jumlah_uang) : '-'}</td>
+                            <td class="text-right">${t.jumlah_beras > 0 ? formatBeras(t.jumlah_beras) : '-'}</td>
+                        </tr>
+                    `;
+                });
+            }
+            
+            html += `
+                    </tbody>
+                </table>
+                
+                <h2>Rincian Penyaluran Zakat (Distribusi)</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 30px;">No</th>
+                            <th style="width: 70px;">Tanggal</th>
+                            <th>Nama Mustahik</th>
+                            <th>Kategori</th>
+                            <th>Jenis Zakat</th>
+                            <th class="text-right">Uang</th>
+                            <th class="text-right">Beras</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            if (currentReportData.distribusi.length === 0) {
+                html += `<tr><td colspan="7" style="text-align: center; color: #64748b;">Tidak ada data penyaluran zakat.</td></tr>`;
+            } else {
+                currentReportData.distribusi.forEach((d, i) => {
+                    html += `
+                        <tr>
+                            <td>${i + 1}</td>
+                            <td>${formatDate(d.tanggal)}</td>
+                            <td><strong>${d.mustahik_nama || 'Umum'}</strong></td>
+                            <td>${d.mustahik_kategori || 'Umum'}</td>
+                            <td>${d.jenis_zakat}</td>
+                            <td class="text-right">${d.jumlah_uang > 0 ? formatIDR(d.jumlah_uang) : '-'}</td>
+                            <td class="text-right">${d.jumlah_beras > 0 ? formatBeras(d.jumlah_beras) : '-'}</td>
+                        </tr>
+                    `;
+                });
+            }
+            
+            html += `
+                    </tbody>
+                </table>
+            `;
+            
+            showLoading(true);
+            try {
+                const res = await window.api.exportPDF({ htmlContent: html, filterType, dateValue });
+                showLoading(false);
+                if (res.success) {
+                    showToast('Laporan PDF berhasil disimpan di: ' + res.filePath, 'success');
+                } else {
+                    showToast(res.message, 'error');
+                }
+            } catch (err) {
+                showLoading(false);
+                showToast('Gagal ekspor PDF: ' + err.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

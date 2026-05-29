@@ -1,0 +1,66 @@
+{
+  "name": "amildesk",
+  "version": "1.0.0",
+  "description": "Sistem Informasi Pengelolaan Zakat, Infak, dan Sedekah Masjid",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "rebuild": "electron-rebuild -f -w better-sqlite3",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "release": "electron-builder"
+  },
+  "keywords": [
+    "zakat",
+    "electron",
+    "sqlite"
+  ],
+  "author": "Masjid Panitia Zakat",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.0.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "electron": "^33.0.2",
+    "electron-builder": "^24.13.3",
+    "electron-rebuild": "^3.2.9"
+  },
+  "build": {
+    "appId": "com.masjid.amildesk",
+    "productName": "AmilDesk",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "AmilDesk"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "database/schema.sql",
+      "database/db.js",
+      "ipc/**/*",
+      "pages/**/*",
+      "assets/**/*",
+      "node_modules/**/*",
+      "!database/amildesk.db",
+      "!database/backup/**/*"
+    ]
+  }
+}

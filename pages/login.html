@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - AmilDesk</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body class="login-body">
+
+    <div class="login-container">
+        <div class="login-logo">
+            <!-- Elegant Crescent / Mosque SVG -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2L2 22h20L12 2zm0 3.99L18.47 19H5.53L12 5.99zM12 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+            </svg>
+        </div>
+        
+        <div class="login-header">
+            <h1>AmilDesk</h1>
+            <p>Sistem Pengelolaan Zakat, Infak & Sedekah</p>
+        </div>
+        
+        <form id="login-form">
+            <div class="form-group">
+                <label for="username">Nama Pengguna (Username)</label>
+                <input type="text" id="username" class="form-control" placeholder="Masukkan username" required autocomplete="username">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Kata Sandi (Password)</label>
+                <input type="password" id="password" class="form-control" placeholder="Masukkan password" required autocomplete="current-password">
+            </div>
+            
+            <div style="margin-top: 24px;">
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 15px;">
+                    Masuk Aplikasi
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Preload core scripts -->
+    <script src="../assets/js/common.js"></script>
+    <script>
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const usernameInput = document.getElementById('username').value;
+            const passwordInput = document.getElementById('password').value;
+            
+            showLoading(true);
+            try {
+                const res = await window.api.login({
+                    username: usernameInput,
+                    password: passwordInput
+                });
+                
+                showLoading(false);
+                if (res.success) {
+                    showToast('Login berhasil! Selamat datang ' + res.user.username, 'success');
+                    // Briefly wait and redirect
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 500);
+                } else {
+                    showToast(res.message, 'error');
+                }
+            } catch (err) {
+                showLoading(false);
+                showToast('Kesalahan koneksi ke main process: ' + err.message, 'error');
+            }
+        });
+    </script>
+</body>
+</html>

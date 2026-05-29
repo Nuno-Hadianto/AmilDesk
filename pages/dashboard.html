@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - AmilDesk</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- Sidebar placeholder -->
+        <div id="sidebar-placeholder"></div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header placeholder -->
+            <div id="header-placeholder"></div>
+            
+            <!-- Dashboard Content Body -->
+            <div class="content-body">
+                
+                <!-- Stat Cards Grid -->
+                <div class="stats-grid">
+                    <!-- Total Pemasukan Uang -->
+                    <div class="stat-card">
+                        <div class="stat-icon blue">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect><line x1="12" y1="4" x2="12" y2="20"></line><line x1="2" y1="12" x2="22" y2="12"></line></svg>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">Total Zakat Masuk (Uang)</div>
+                            <div class="stat-value" id="stat-total-uang-masuk">Rp0</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Total Pemasukan Beras -->
+                    <div class="stat-card">
+                        <div class="stat-icon green">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">Total Zakat Masuk (Beras)</div>
+                            <div class="stat-value" id="stat-total-beras-masuk">0 kg</div>
+                        </div>
+                    </div>
+
+                    <!-- Total Penyaluran Uang -->
+                    <div class="stat-card">
+                        <div class="stat-icon orange">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">Total Distribusi (Uang)</div>
+                            <div class="stat-value" id="stat-total-uang-keluar">Rp0</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Total Penyaluran Beras -->
+                    <div class="stat-card">
+                        <div class="stat-icon orange">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">Total Distribusi (Beras)</div>
+                            <div class="stat-value" id="stat-total-beras-keluar">0 kg</div>
+                        </div>
+                    </div>
+
+                    <!-- Sisa Saldo Uang -->
+                    <div class="stat-card" style="border-left: 4px solid var(--primary-color);">
+                        <div class="stat-icon green">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label" style="color: var(--primary-dark); font-weight: 700;">Sisa Saldo Kas (Uang)</div>
+                            <div class="stat-value" id="stat-sisa-uang" style="color: var(--primary-dark);">Rp0</div>
+                        </div>
+                    </div>
+
+                    <!-- Sisa Stok Beras -->
+                    <div class="stat-card" style="border-left: 4px solid var(--primary-color);">
+                        <div class="stat-icon green">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label" style="color: var(--primary-dark); font-weight: 700;">Sisa Stok Kas (Beras)</div>
+                            <div class="stat-value" id="stat-sisa-beras" style="color: var(--primary-dark);">0 kg</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Two-Column Layout for Recent Data / Quick Actions -->
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+                    
+                    <!-- Left: Recent Activity Summaries -->
+                    <div>
+                        <div class="card" style="padding: 20px;">
+                            <div class="card-header" style="margin-bottom: 12px; padding-bottom: 8px;">
+                                <div class="card-title">Ringkasan Sistem & Operasional</div>
+                            </div>
+                            <div style="font-size: 14px; line-height: 1.6; color: var(--text-secondary);">
+                                <p>Selamat datang di <strong>AmilDesk</strong>. Aplikasi ini beroperasi <strong>100% Offline</strong> pada komputer ini. Seluruh database transaksi disimpan secara lokal untuk menjamin kecepatan, kehandalan, serta keamanan data masjid.</p>
+                                <br>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px;">
+                                    <div style="background-color: var(--bg-main); padding: 12px; border-radius: 8px; border: 1px dashed var(--border-color);">
+                                        <h4 style="color: var(--primary-dark); margin-bottom: 4px;">Muzakki Terdaftar</h4>
+                                        <p style="font-size: 20px; font-weight: bold; color: var(--text-primary);" id="count-muzakki">0</p>
+                                    </div>
+                                    <div style="background-color: var(--bg-main); padding: 12px; border-radius: 8px; border: 1px dashed var(--border-color);">
+                                        <h4 style="color: var(--primary-dark); margin-bottom: 4px;">Mustahik Terdaftar</h4>
+                                        <p style="font-size: 20px; font-weight: bold; color: var(--text-primary);" id="count-mustahik">0</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right: Quick Actions -->
+                    <div>
+                        <div class="card" style="padding: 20px;">
+                            <div class="card-header" style="margin-bottom: 16px; padding-bottom: 8px;">
+                                <div class="card-title">Aksi Cepat</div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                <a href="transaksi.html" class="btn btn-primary" style="text-align: center; justify-content: center; width: 100%;">
+                                    + Catat Zakat Masuk
+                                </a>
+                                <a href="distribusi.html" class="btn btn-secondary" style="text-align: center; justify-content: center; width: 100%;">
+                                    + Catat Penyaluran Zakat
+                                </a>
+                                <a href="muzakki.html" class="btn btn-secondary" style="text-align: center; justify-content: center; width: 100%; border-color: var(--border-color);">
+                                    Kelola Muzakki
+                                </a>
+                                <a href="mustahik.html" class="btn btn-secondary" style="text-align: center; justify-content: center; width: 100%; border-color: var(--border-color);">
+                                    Kelola Mustahik
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Scripts -->
+    <script src="../assets/js/common.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Wait slightly for common.js auth verification to finalize
+            setTimeout(loadDashboardData, 100);
+        });
+
+        async function loadDashboardData() {
+            showLoading(true);
+            try {
+                const res = await window.api.getDashboardStats();
+                showLoading(false);
+                
+                if (res.success) {
+                    const stats = res.stats;
+                    
+                    // Populate values
+                    document.getElementById('stat-total-uang-masuk').innerText = formatIDR(stats.totalUangMasuk);
+                    document.getElementById('stat-total-beras-masuk').innerText = formatBeras(stats.totalBerasMasuk);
+                    
+                    document.getElementById('stat-total-uang-keluar').innerText = formatIDR(stats.totalUangKeluar);
+                    document.getElementById('stat-total-beras-keluar').innerText = formatBeras(stats.totalBerasKeluar);
+                    
+                    document.getElementById('stat-sisa-uang').innerText = formatIDR(stats.sisaUang);
+                    document.getElementById('stat-sisa-beras').innerText = formatBeras(stats.sisaBeras);
+                    
+                    document.getElementById('count-muzakki').innerText = stats.counts.muzakki;
+                    document.getElementById('count-mustahik').innerText = stats.counts.mustahik;
+                } else {
+                    showToast('Gagal memuat statistik: ' + res.message, 'error');
+                }
+            } catch (err) {
+                showLoading(false);
+                showToast('Terjadi kesalahan memuat dashboard: ' + err.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

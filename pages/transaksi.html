@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaksi Zakat - AmilDesk</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+    <div class="app-container">
+        <div id="sidebar-placeholder"></div>
+        
+        <div class="main-content">
+            <div id="header-placeholder"></div>
+            
+            <div class="content-body">
+                <div class="card">
+                    <!-- Controls Header -->
+                    <div class="table-controls">
+                        <div style="display: flex; gap: 12px; flex-grow: 1; max-width: 600px;">
+                            <div class="search-box">
+                                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                <input type="text" id="search-input" placeholder="Cari nama muzakki, keterangan...">
+                            </div>
+                            
+                            <select id="filter-jenis" class="filter-select">
+                                <option value="">Semua Jenis Zakat</option>
+                                <option value="Zakat Fitrah">Zakat Fitrah</option>
+                                <option value="Zakat Mal">Zakat Mal</option>
+                                <option value="Infaq">Infaq</option>
+                                <option value="Sedekah">Sedekah</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" id="btn-tambah-transaksi">
+                            + Catat Zakat Masuk
+                        </button>
+                    </div>
+                    
+                    <!-- Table Container -->
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 80px;">No</th>
+                                    <th>Tanggal</th>
+                                    <th>Muzakki</th>
+                                    <th>Jenis Zakat</th>
+                                    <th style="text-align: right;">Jumlah Jiwa</th>
+                                    <th style="text-align: right;">Jumlah Uang</th>
+                                    <th style="text-align: right;">Jumlah Beras</th>
+                                    <th>Keterangan</th>
+                                    <th style="width: 150px; text-align: center;">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transaksi-table-body">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination footer -->
+                    <div class="pagination">
+                        <div class="pagination-info" id="pagination-info">Menampilkan 0 - 0 dari 0 data</div>
+                        <div class="pagination-buttons">
+                            <button class="btn btn-secondary btn-small" id="btn-prev-page" disabled>Sebelumnya</button>
+                            <button class="btn btn-secondary btn-small" id="btn-next-page" disabled>Selanjutnya</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add / Edit Modal -->
+    <div class="modal-overlay" id="transaksi-modal">
+        <div class="modal-container" style="width: 580px;">
+            <div class="modal-header">
+                <h3 id="modal-title">Catat Transaksi Zakat</h3>
+                <button class="btn-close-modal" id="btn-close-transaksi-modal">&times;</button>
+            </div>
+            <form id="transaksi-form">
+                <div class="modal-body">
+                    <input type="hidden" id="transaksi-id">
+                    
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="tanggal">Tanggal Transaksi *</label>
+                            <input type="date" id="tanggal" class="form-control" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="jenis_zakat">Jenis Penerimaan *</label>
+                            <select id="jenis_zakat" class="form-control" required>
+                                <option value="Zakat Fitrah">Zakat Fitrah</option>
+                                <option value="Zakat Mal">Zakat Mal</option>
+                                <option value="Infaq">Infaq</option>
+                                <option value="Sedekah">Sedekah</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="muzakki_id">Pilih Muzakki (Pemberi) *</label>
+                        <div style="display: flex; gap: 8px;">
+                            <select id="muzakki_id" class="form-control" style="flex-grow: 1;" required>
+                                <!-- Populated dynamically -->
+                            </select>
+                            <button type="button" class="btn btn-secondary btn-small" id="btn-quick-add-muzakki" style="padding: 10px; height: 38px;">
+                                + Baru
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="jumlah_jiwa">Jumlah Jiwa (Khusus Fitrah)</label>
+                            <input type="number" id="jumlah_jiwa" class="form-control" min="0" value="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="jumlah_beras">Jumlah Beras (kg)</label>
+                            <input type="number" id="jumlah_beras" class="form-control" min="0" step="0.1" value="0">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="jumlah_uang">Jumlah Uang (Rp)</label>
+                        <input type="number" id="jumlah_uang" class="form-control" min="0" value="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="keterangan">Keterangan / Catatan</label>
+                        <textarea id="keterangan" class="form-control" placeholder="Contoh: Zakat Fitrah keluarga, Infaq Jum'at, dll."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-small" id="btn-cancel-transaksi-modal">Batal</button>
+                    <button type="submit" class="btn btn-primary btn-small">Simpan Transaksi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Quick Add Muzakki Modal -->
+    <div class="modal-overlay" id="quick-muzakki-modal" style="z-index: 1100;">
+        <div class="modal-container" style="width: 400px; margin-top: 50px;">
+            <div class="modal-header">
+                <h3>Tambah Muzakki Cepat</h3>
+                <button type="button" class="btn-close-modal" id="btn-close-quick-muzakki">&times;</button>
+            </div>
+            <form id="quick-muzakki-form">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="quick-nama">Nama Lengkap *</label>
+                        <input type="text" id="quick-nama" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="quick-no_hp">No. HP</label>
+                        <input type="text" id="quick-no_hp" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="quick-alamat">Alamat</label>
+                        <textarea id="quick-alamat" class="form-control"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-small" id="btn-cancel-quick-muzakki">Batal</button>
+                    <button type="submit" class="btn btn-primary btn-small">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Core Scripts -->
+    <script src="../assets/js/common.js"></script>
+    <script>
+        let currentPage = 1;
+        const limit = 10;
+        let searchKeyword = '';
+        let filterJenisZakat = '';
+        let muzakkiList = [];
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initial load
+            setTimeout(() => {
+                fetchTransaksiList();
+                loadMuzakkiDropdown();
+            }, 100);
+            
+            // Search Input handler
+            let searchTimeout;
+            document.getElementById('search-input').addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    searchKeyword = e.target.value;
+                    currentPage = 1;
+                    fetchTransaksiList();
+                }, 400);
+            });
+            
+            // Filter dropdown handler
+            document.getElementById('filter-jenis').addEventListener('change', (e) => {
+                filterJenisZakat = e.target.value;
+                currentPage = 1;
+                fetchTransaksiList();
+            });
+            
+            // Add click
+            document.getElementById('btn-tambah-transaksi').addEventListener('click', () => {
+                openTransaksiModal();
+            });
+            
+            // Close triggers
+            document.getElementById('btn-close-transaksi-modal').addEventListener('click', closeTransaksiModal);
+            document.getElementById('btn-cancel-transaksi-modal').addEventListener('click', closeTransaksiModal);
+            
+            // Form submit
+            document.getElementById('transaksi-form').addEventListener('submit', handleTransaksiSubmit);
+            
+            // Quick Add Muzakki actions
+            document.getElementById('btn-quick-add-muzakki').addEventListener('click', () => {
+                document.getElementById('quick-muzakki-modal').classList.add('open');
+            });
+            document.getElementById('btn-close-quick-muzakki').addEventListener('click', () => {
+                document.getElementById('quick-muzakki-modal').classList.remove('open');
+            });
+            document.getElementById('btn-cancel-quick-muzakki').addEventListener('click', () => {
+                document.getElementById('quick-muzakki-modal').classList.remove('open');
+            });
+            document.getElementById('quick-muzakki-form').addEventListener('submit', handleQuickMuzakkiSubmit);
+            
+            // Pagination buttons
+            document.getElementById('btn-prev-page').addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    fetchTransaksiList();
+                }
+            });
+            document.getElementById('btn-next-page').addEventListener('click', () => {
+                currentPage++;
+                fetchTransaksiList();
+            });
+        });
+        
+        async function loadMuzakkiDropdown() {
+            try {
+                // Fetch first 500 muzakki for dropdown selection
+                const res = await window.api.listMuzakki({ page: 1, limit: 500, search: '' });
+                if (res.success) {
+                    muzakkiList = res.data;
+                    const select = document.getElementById('muzakki_id');
+                    select.innerHTML = '<option value="">-- Pilih Muzakki --</option>';
+                    muzakkiList.forEach(m => {
+                        const opt = document.createElement('option');
+                        opt.value = m.id;
+                        opt.innerText = m.nama + (m.alamat ? ` (${m.alamat})` : '');
+                        select.appendChild(opt);
+                    });
+                }
+            } catch (err) {
+                console.error("Dropdown error:", err);
+            }
+        }
+        
+        async function fetchTransaksiList() {
+            showLoading(true);
+            try {
+                const res = await window.api.listTransaksi({
+                    page: currentPage,
+                    limit: limit,
+                    search: searchKeyword,
+                    jenis: filterJenisZakat
+                });
+                showLoading(false);
+                
+                if (res.success) {
+                    renderTable(res.data, res.total, res.page, res.totalPages);
+                } else {
+                    showToast('Gagal memuat transaksi: ' + res.message, 'error');
+                }
+            } catch (err) {
+                showLoading(false);
+                showToast('Kesalahan sistem: ' + err.message, 'error');
+            }
+        }
+        
+        function renderTable(data, total, page, totalPages) {
+            const body = document.getElementById('transaksi-table-body');
+            body.innerHTML = '';
+            
+            if (data.length === 0) {
+                body.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="empty-state">
+                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            <h3>Transaksi Kosong</h3>
+                            <p>Belum ada pencatatan zakat masuk. Klik tombol Catat Zakat Masuk untuk memulai.</p>
+                        </td>
+                    </tr>
+                `;
+                document.getElementById('pagination-info').innerText = 'Menampilkan 0 - 0 dari 0 data';
+                document.getElementById('btn-prev-page').disabled = true;
+                document.getElementById('btn-next-page').disabled = true;
+                return;
+            }
+            
+            const startNum = (page - 1) * limit + 1;
+            const endNum = Math.min(page * limit, total);
+            
+            data.forEach((row, idx) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${startNum + idx}</td>
+                    <td>${formatDate(row.tanggal)}</td>
+                    <td style="font-weight: 600;">${row.muzakki_nama || '<span style="color: var(--text-light)">Bukan Muzakki</span>'}</td>
+                    <td><span class="badge ${getBadgeClass(row.jenis_zakat)}">${row.jenis_zakat}</span></td>
+                    <td style="text-align: right; font-variant-numeric: tabular-nums;">${row.jumlah_jiwa || 0}</td>
+                    <td style="text-align: right; font-weight: 600; font-variant-numeric: tabular-nums;">${row.jumlah_uang > 0 ? formatIDR(row.jumlah_uang) : '-'}</td>
+                    <td style="text-align: right; font-weight: 600; font-variant-numeric: tabular-nums;">${row.jumlah_beras > 0 ? formatBeras(row.jumlah_beras) : '-'}</td>
+                    <td>${row.keterangan || '-'}</td>
+                    <td style="text-align: center;">
+                        <button class="btn btn-secondary btn-small btn-edit" style="margin-right: 4px;" 
+                            data-id="${row.id}" 
+                            data-tanggal="${row.tanggal}" 
+                            data-muzakki="${row.muzakki_id}" 
+                            data-jenis="${row.jenis_zakat}" 
+                            data-jiwa="${row.jumlah_jiwa}" 
+                            data-uang="${row.jumlah_uang}" 
+                            data-beras="${row.jumlah_beras}" 
+                            data-ket="${row.keterangan || ''}">Ubah</button>
+                        <button class="btn btn-danger btn-small btn-delete" data-id="${row.id}" data-muzakki="${row.muzakki_nama || 'Umum'}">Hapus</button>
+                    </td>
+                `;
+                body.appendChild(tr);
+            });
+            
+            document.getElementById('pagination-info').innerText = `Menampilkan ${startNum} - ${endNum} dari ${total} data`;
+            document.getElementById('btn-prev-page').disabled = page <= 1;
+            document.getElementById('btn-next-page').disabled = page >= totalPages;
+            
+            // Hook buttons
+            document.querySelectorAll('.btn-edit').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const ds = e.target.dataset;
+                    openTransaksiModal(ds.id, ds.tanggal, ds.muzakki, ds.jenis, ds.jiwa, ds.uang, ds.beras, ds.ket);
+                });
+            });
+            
+            document.querySelectorAll('.btn-delete').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.target.dataset.id;
+                    const muzakki = e.target.dataset.muzakki;
+                    showConfirm('Hapus Transaksi', `Apakah Anda yakin ingin menghapus catatan transaksi zakat dari "${muzakki}"? Tindakan ini akan merubah sisa saldo kas/beras secara otomatis.`, async () => {
+                        showLoading(true);
+                        const result = await window.api.deleteTransaksi(id);
+                        showLoading(false);
+                        if (result.success) {
+                            showToast(`Transaksi zakat berhasil dihapus.`, 'success');
+                            fetchTransaksiList();
+                        } else {
+                            showToast(result.message, 'error');
+                        }
+                    });
+                });
+            });
+        }
+        
+        function getBadgeClass(type) {
+            switch(type) {
+                case 'Zakat Fitrah': return 'badge-green';
+                case 'Zakat Mal': return 'badge-blue';
+                case 'Infaq': return 'badge-orange';
+                case 'Sedekah': return 'badge-orange';
+                default: return 'badge-secondary';
+            }
+        }
+        
+        function openTransaksiModal(id = '', tanggal = '', muzakki_id = '', jenis_zakat = 'Zakat Fitrah', jumlah_jiwa = 0, jumlah_uang = 0, jumlah_beras = 0, keterangan = '') {
+            document.getElementById('transaksi-id').value = id;
+            
+            // Default date to today
+            if (!tanggal) {
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const dd = String(today.getDate()).padStart(2, '0');
+                tanggal = `${yyyy}-${mm}-${dd}`;
+            }
+            
+            document.getElementById('tanggal').value = tanggal;
+            document.getElementById('muzakki_id').value = muzakki_id;
+            document.getElementById('jenis_zakat').value = jenis_zakat;
+            document.getElementById('jumlah_jiwa').value = jumlah_jiwa;
+            document.getElementById('jumlah_uang').value = jumlah_uang;
+            document.getElementById('jumlah_beras').value = jumlah_beras;
+            document.getElementById('keterangan').value = keterangan;
+            
+            if (id) {
+                document.getElementById('modal-title').innerText = 'Ubah Transaksi Zakat';
+            } else {
+                document.getElementById('modal-title').innerText = 'Catat Transaksi Zakat Baru';
+            }
+            
+            document.getElementById('transaksi-modal').classList.add('open');
+        }
+        
+        function closeTransaksiModal() {
+            document.getElementById('transaksi-modal').classList.remove('open');
+            document.getElementById('transaksi-form').reset();
+        }
+        
+        async function handleTransaksiSubmit(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('transaksi-id').value;
+            const tanggal = document.getElementById('tanggal').value;
+            const muzakki_id = parseInt(document.getElementById('muzakki_id').value);
+            const jenis_zakat = document.getElementById('jenis_zakat').value;
+            const jumlah_jiwa = parseInt(document.getElementById('jumlah_jiwa').value) || 0;
+            const jumlah_uang = parseFloat(document.getElementById('jumlah_uang').value) || 0;
+            const jumlah_beras = parseFloat(document.getElementById('jumlah_beras').value) || 0;
+            const keterangan = document.getElementById('keterangan').value;
+            
+            if (!muzakki_id) {
+                showToast('Mohon pilih muzakki.', 'error');
+                return;
+            }
+            if (jumlah_uang === 0 && jumlah_beras === 0) {
+                showToast('Jumlah uang atau beras wajib diisi salah satu.', 'error');
+                return;
+            }
+            
+            showLoading(true);
+            try {
+                let res;
+                const payload = { tanggal, muzakki_id, jenis_zakat, jumlah_jiwa, jumlah_uang, jumlah_beras, keterangan };
+                if (id) {
+                    res = await window.api.updateTransaksi({ id: parseInt(id), ...payload });
+                } else {
+                    res = await window.api.createTransaksi(payload);
+                }
+                
+                showLoading(false);
+                if (res.success) {
+                    showToast(id ? 'Transaksi berhasil diperbarui.' : 'Transaksi zakat berhasil disimpan.', 'success');
+                    closeTransaksiModal();
+                    fetchTransaksiList();
+                } else {
+                    showToast(res.message, 'error');
+                }
+            } catch (err) {
+                showLoading(false);
+                showToast('Terjadi kesalahan: ' + err.message, 'error');
+            }
+        }
+        
+        async function handleQuickMuzakkiSubmit(e) {
+            e.preventDefault();
+            
+            const nama = document.getElementById('quick-nama').value;
+            const no_hp = document.getElementById('quick-no_hp').value;
+            const alamat = document.getElementById('quick-alamat').value;
+            
+            showLoading(true);
+            try {
+                const res = await window.api.createMuzakki({ nama, no_hp, alamat });
+                showLoading(false);
+                
+                if (res.success) {
+                    showToast('Muzakki baru berhasil ditambahkan.', 'success');
+                    document.getElementById('quick-muzakki-modal').classList.remove('open');
+                    document.getElementById('quick-muzakki-form').reset();
+                    
+                    // Reload dropdown and select the newly added muzakki
+                    await loadMuzakkiDropdown();
+                    document.getElementById('muzakki_id').value = res.id;
+                } else {
+                    showToast(res.message, 'error');
+                }
+            } catch (err) {
+                showLoading(false);
+                showToast('Gagal menyimpan muzakki: ' + err.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

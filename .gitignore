@@ -1,0 +1,13 @@
+# Dependencies
+node_modules/
+
+# Production builds and installers
+dist/
+
+# SQLite databases (development data)
+database/*.db
+database/backup/*.db
+
+# OS specific files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pengaturan & Backup - AmilDesk</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <style>
+        .settings-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        .full-width-card {
+            grid-column: span 2;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <div id="sidebar-placeholder"></div>
+        
+        <div class="main-content">
+            <div id="header-placeholder"></div>
+            
+            <div class="content-body" id="settings-content-body" style="display: none;">
+                
+                <div class="settings-layout">
+                    
+                    <!-- Left: Backup Database -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Backup Database SQLite</div>
+                            <button class="btn btn-primary btn-small" id="btn-create-backup">Buat Backup Baru</button>
+                        </div>
+                        
+                        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+                            Seluruh data disimpan secara lokal pada komputer ini. Lakukan backup berkala demi menjaga keamanan data masjid dari resiko hardware rusak. File backup disimpan di folder <code>database/backup/</code>.
+                        </p>
+                        
+                        <!-- Backups list -->
+                        <div class="table-container" style="max-height: 300px; overflow-y: auto;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Nama File</th>
+                                        <th>Ukuran</th>
+                                        <th style="width: 140px; text-align: center;">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="backups-table-body">
+                                    <!-- Backups -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Right: Info Sesi & Akun -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Sesi Aktif & Keterangan Sistem</div>
+                        </div>
+                        
+                        <div style="font-size: 14px; line-height: 1.8; color: var(--text-secondary);">
+                            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding: 8px 0;">
+                                <span>Pengguna Aktif:</span>
+                                <strong style="color: var(--text-primary);" id="session-username">-</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding: 8px 0;">
+                                <span>Role Akses:</span>
+                                <span class="badge badge-green" id="session-role">-</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding: 8px 0;">
+                                <span>Koneksi Database:</span>
+                                <span class="badge badge-blue">Offline (SQLite)</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 8px 0;">
+                                <span>Versi Aplikasi:</span>
+                                <strong style="color: var(--text-primary);">1.0.0 (Windows Stable)</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Full Width: Audit Log -->
+                    <div class="card full-width-card">
+                        <div class="card-header">
+                            <div class="card-title">Log Aktivitas (Audit Log)</div>
+                            
+                            <!-- Search -->
+                            <div class="search-box" style="max-width: 250px;">
+                                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                <input type="text" id="audit-search" placeholder="Cari aktivitas/user...">
+                            </div>
+                        </div>
+                        
+                        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+                            Mencatat riwayat aktivitas login, tambah, ubah, hapus, dan penyaluran zakat beserta keterangan waktu detail.
+                        </p>
+                        
+                        <!-- Table Audit Log -->
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 70px;">No</th>
+                                        <th style="width: 130px;">User</th>
+                                        <th>Aktivitas</th>
+                                        <th style="width: 120px;">Tanggal</th>
+                                        <th style="width: 100px;">Waktu</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="audit-table-body">
+                                    <!-- Audit logs -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Pagination audit log -->
+                        <div class="pagination">
+                            <div class="pagination-info" id="audit-pagination-info">Menampilkan 0 - 0 dari 0 log</div>
+                            <div class="pagination-buttons">
+                                <button class="btn btn-secondary btn-small" id="btn-prev-audit" disabled>Sebelumnya</button>
+                                <button class="btn btn-secondary btn-small" id="btn-next-audit" disabled>Selanjutnya</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+                
+            </div>
+            
+            <!-- Access Denied -->
+            <div class="content-body" id="access-denied-body" style="display: none; text-align: center; padding-top: 100px;">
+                <div class="card" style="max-width: 500px; margin: 0 auto; padding: 40px;">
+                    <div style="color: var(--danger-color); margin-bottom: 20px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    </div>
+                    <h2 style="font-weight: 800; color: var(--text-primary); margin-bottom: 12px;">Akses Ditolak</h2>
+                    <p style="color: var(--text-secondary); font-size: 14px; line-height: 1.6; margin-bottom: 24px;">
+                        Halaman ini hanya dapat diakses oleh pengguna dengan role <strong>Admin</strong>. Sesi Anda tidak memiliki wewenang untuk melihat log sistem atau mengelola database.
+                    </p>
+                    <a href="dashboard.html" class="btn btn-primary">Kembali ke Dashboard</a>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Core Scripts -->
+    <script src="../assets/js/common.js"></script>
+    <script>
+        let auditPage = 1;
+        const auditLimit = 10;
+        let auditSearch = '';
+        
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Verify access control
+            setTimeout(async () => {
+                const user = await window.api.getCurrentUser();
+                if (!user) return;
+                
+                if (user.role !== 'Admin') {
+                    document.getElementById('access-denied-body').style.display = 'block';
+                    return;
+                }
+                
+                // Authorised Admin
+                document.getElementById('settings-content-body').style.display = 'block';
+                
+                // Show session info
+                document.getElementById('session-username').innerText = user.username;
+                document.getElementById('session-role').innerText = user.role;
+                
+                // Load data
+                fetchBackups();
+                fetchAuditLogs();
+                
+                // Hook backup creator
+                document.getElementById('btn-create-backup').addEventListener('click', createNewBackup);
+                
+                // Hook audit log search
+                let searchTimeout;
+                document.getElementById('audit-search').addEventListener('input', (e) => {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        auditSearch = e.target.value;
+                        auditPage = 1;
+                        fetchAuditLogs();
+                    }, 400);
+                });
+                
+                // Audit Pagination
+                document.getElementById('btn-prev-audit').addEventListener('click', () => {
+                    if (auditPage > 1) {
+                        auditPage--;
+                        fetchAuditLogs();
+                    }
+                });
+                
+                document.getElementById('btn-next-audit').addEventListener('click', () => {
+                    auditPage++;
+                    fetchAuditLogs();
+                });
+                
+            }, 100);
+        });
+        
+        async function fetchBackups() {
+            try {
+                const res = await window.api.listBackups();
+                if (res.success) {
+                    renderBackupsTable(res.backups);
+                } else {
+                    showToast('Gagal memuat backup: ' + res.message, 'error');
+                }
+            } catch (err) {
+                showToast('Kesalahan load backup: ' + err.message, 'error');
+            }
+        }
+        
+        function renderBackupsTable(backups) {
+            const body = document.getElementById('backups-table-body');
+            body.innerHTML = '';
+            
+            if (backups.length === 0) {
+                body.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-secondary); padding: 12px;">Belum ada file backup database.</td></tr>`;
+                return;
+            }
+            
+            backups.forEach(b => {
+                const tr = document.createElement('tr');
+                const sizeKb = (b.size / 1024).toFixed(1);
+                
+                tr.innerHTML = `
+                    <td style="font-family: monospace; font-size: 13px;">${b.filename}</td>
+                    <td style="font-variant-numeric: tabular-nums;">${sizeKb} KB</td>
+                    <td style="text-align: center;">
+                        <button class="btn btn-secondary btn-small btn-restore" data-filename="${b.filename}">Restore</button>
+                    </td>
+                `;
+                body.appendChild(tr);
+            });
+            
+            // Hook restore actions
+            document.querySelectorAll('.btn-restore').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const filename = e.target.dataset.filename;
+                    showConfirm('Restore Database', `Peringatan! Apakah Anda yakin ingin memulihkan database dari backup "${filename}"? Semua data transaksi saat ini akan DITIMPA dan tidak dapat dikembalikan. Aplikasi akan melakukan sinkronisasi ulang.`, async () => {
+                        showLoading(true);
+                        const result = await window.api.restoreBackup(filename);
+                        showLoading(false);
+                        if (result.success) {
+                            showToast('Database berhasil dipulihkan dari file backup!', 'success');
+                            // Reload settings and audit logs
+                            fetchBackups();
+                            fetchAuditLogs();
+                        } else {
+                            showToast(result.message, 'error');
+                        }
+                    });
+                });
+            });
+        }
+        
+        async function createNewBackup() {
+            showLoading(true);
+            try {
+                const res = await window.api.createBackup();
+                showLoading(false);
+                if (res.success) {
+                    showToast(`Backup database "${res.filename}" berhasil dibuat.`, 'success');
+                    fetchBackups();
+                } else {
+                    showToast(res.message, 'error');
+                }
+            } catch (err) {
+                showLoading(false);
+                showToast('Gagal memproses backup: ' + err.message, 'error');
+            }
+        }
+        
+        async function fetchAuditLogs() {
+            try {
+                const res = await window.api.listAuditLogs({
+                    page: auditPage,
+                    limit: auditLimit,
+                    search: auditSearch
+                });
+                if (res.success) {
+                    renderAuditLogsTable(res.data, res.total, res.page, res.totalPages);
+                }
+            } catch (err) {
+                console.error("Audit load error:", err);
+            }
+        }
+        
+        function renderAuditLogsTable(data, total, page, totalPages) {
+            const body = document.getElementById('audit-table-body');
+            body.innerHTML = '';
+            
+            if (data.length === 0) {
+                body.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 20px;">Log audit tidak ditemukan.</td></tr>`;
+                document.getElementById('audit-pagination-info').innerText = 'Menampilkan 0 - 0 dari 0 log';
+                document.getElementById('btn-prev-audit').disabled = true;
+                document.getElementById('btn-next-audit').disabled = true;
+                return;
+            }
+            
+            const startNum = (page - 1) * auditLimit + 1;
+            const endNum = Math.min(page * auditLimit, total);
+            
+            data.forEach((row, idx) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${startNum + idx}</td>
+                    <td style="font-weight: bold; color: var(--primary-deep);">${row.username}</td>
+                    <td>${row.aktivitas}</td>
+                    <td style="font-variant-numeric: tabular-nums;">${formatDate(row.tanggal)}</td>
+                    <td style="font-variant-numeric: tabular-nums; color: var(--text-secondary);">${row.waktu}</td>
+                `;
+                body.appendChild(tr);
+            });
+            
+            document.getElementById('audit-pagination-info').innerText = `Menampilkan ${startNum} - ${endNum} dari ${total} log`;
+            document.getElementById('btn-prev-audit').disabled = page <= 1;
+            document.getElementById('btn-next-audit').disabled = page >= totalPages;
+        }
+    </script>
+</body>
+</html>
