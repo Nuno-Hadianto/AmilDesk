@@ -19,6 +19,7 @@ const { initMustahikIPC } = require('./ipc/mustahik');
 const { initDistribusiIPC } = require('./ipc/distribusi');
 const { initLaporanIPC } = require('./ipc/laporan');
 const { initSettingsIPC } = require('./ipc/settings');
+const { initUsersIPC } = require('./ipc/users');
 
 function createMainWindow() {
     mainWindow = new BrowserWindow({
@@ -61,6 +62,7 @@ app.whenReady().then(() => {
     initDistribusiIPC();
     initLaporanIPC();
     initSettingsIPC();
+    initUsersIPC();
     
     createMainWindow();
     

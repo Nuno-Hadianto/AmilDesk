@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pengaturan & Backup - AmilDesk</title>
+    <title>Pengaturan Sistem - AmilDesk</title>
     <link rel="stylesheet" href="../assets/css/style.css">
     <style>
         .settings-layout {
@@ -13,6 +13,9 @@
         }
         .full-width-card {
             grid-column: span 2;
+        }
+        .hidden {
+            display: none !important;
         }
     </style>
 </head>
@@ -28,8 +31,8 @@
                 
                 <div class="settings-layout">
                     
-                    <!-- Left: Backup Database -->
-                    <div class="card">
+                    <!-- Left: Backup Database (Admin Only) -->
+                    <div class="card admin-only">
                         <div class="card-header">
                             <div class="card-title">Backup Database SQLite</div>
                             <button class="btn btn-primary btn-small" id="btn-create-backup">Buat Backup Baru</button>
@@ -40,7 +43,7 @@
                         </p>
                         
                         <!-- Backups list -->
-                        <div class="table-container" style="max-height: 300px; overflow-y: auto;">
+                        <div class="table-container" style="max-height: 250px; overflow-y: auto;">
                             <table class="data-table">
                                 <thead>
                                     <tr>
@@ -55,8 +58,8 @@
                             </table>
                         </div>
                     </div>
-                    
-                    <!-- Right: Info Sesi & Akun -->
+
+                    <!-- Right: Info Sesi & Akun (All Users) -->
                     <div class="card">
                         <div class="card-header">
                             <div class="card-title">Sesi Aktif & Keterangan Sistem</div>
@@ -82,8 +85,65 @@
                         </div>
                     </div>
 
-                    <!-- Full Width: Audit Log -->
-                    <div class="card full-width-card">
+                    <!-- Left: Ganti Kata Sandi Mandiri (All Users) -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Ganti Kata Sandi</div>
+                        </div>
+                        
+                        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+                            Ubah kata sandi untuk akun yang saat ini sedang Anda gunakan.
+                        </p>
+                        
+                        <form id="change-pwd-form">
+                            <div class="form-group">
+                                <label for="old-password">Kata Sandi Lama *</label>
+                                <input type="password" id="old-password" class="form-control" required placeholder="Masukkan password saat ini">
+                            </div>
+                            <div class="form-group">
+                                <label for="new-password">Kata Sandi Baru *</label>
+                                <input type="password" id="new-password" class="form-control" required placeholder="Minimal 4 karakter">
+                            </div>
+                            <div class="form-group">
+                                <label for="confirm-password">Konfirmasi Kata Sandi Baru *</label>
+                                <input type="password" id="confirm-password" class="form-control" required placeholder="Ulangi password baru">
+                            </div>
+                            <div style="margin-top: 16px; text-align: right;">
+                                <button type="submit" class="btn btn-primary btn-small">Perbarui Password</button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Right: Manajemen Pengguna (Admin Only) -->
+                    <div class="card admin-only">
+                        <div class="card-header">
+                            <div class="card-title">Manajemen Akun Pengguna</div>
+                            <button class="btn btn-primary btn-small" id="btn-tambah-user">+ Tambah User</button>
+                        </div>
+                        
+                        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+                            Kelola hak akses untuk petugas masjid. Panitia hanya dapat mencatat transaksi, Bendahara dapat melihat laporan, dan Admin memiliki kontrol penuh.
+                        </p>
+                        
+                        <!-- Users list -->
+                        <div class="table-container" style="max-height: 250px; overflow-y: auto;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Username</th>
+                                        <th>Peran (Role)</th>
+                                        <th style="width: 150px; text-align: center;">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-table-body">
+                                    <!-- Users -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Full Width: Audit Log (Admin Only) -->
+                    <div class="card full-width-card admin-only">
                         <div class="card-header">
                             <div class="card-title">Log Aktivitas (Audit Log)</div>
                             
@@ -130,20 +190,45 @@
                 
             </div>
             
-            <!-- Access Denied -->
-            <div class="content-body" id="access-denied-body" style="display: none; text-align: center; padding-top: 100px;">
-                <div class="card" style="max-width: 500px; margin: 0 auto; padding: 40px;">
-                    <div style="color: var(--danger-color); margin-bottom: 20px;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                    </div>
-                    <h2 style="font-weight: 800; color: var(--text-primary); margin-bottom: 12px;">Akses Ditolak</h2>
-                    <p style="color: var(--text-secondary); font-size: 14px; line-height: 1.6; margin-bottom: 24px;">
-                        Halaman ini hanya dapat diakses oleh pengguna dengan role <strong>Admin</strong>. Sesi Anda tidak memiliki wewenang untuk melihat log sistem atau mengelola database.
-                    </p>
-                    <a href="dashboard.html" class="btn btn-primary">Kembali ke Dashboard</a>
-                </div>
+        </div>
+    </div>
+
+    <!-- User Modal (Add / Edit) -->
+    <div class="modal-overlay" id="user-modal">
+        <div class="modal-container" style="width: 440px;">
+            <div class="modal-header">
+                <h3 id="user-modal-title">Tambah Pengguna Baru</h3>
+                <button class="btn-close-modal" id="btn-close-user-modal">&times;</button>
             </div>
-            
+            <form id="user-form">
+                <div class="modal-body">
+                    <input type="hidden" id="user-id">
+                    
+                    <div class="form-group">
+                        <label for="user-username">Nama Pengguna (Username) *</label>
+                        <input type="text" id="user-username" class="form-control" required placeholder="Contoh: panitia_zakat">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="user-password">Kata Sandi (Password) <span id="pwd-required-star">*</span></label>
+                        <input type="password" id="user-password" class="form-control" placeholder="Masukkan password">
+                        <small id="user-password-help" class="form-text text-muted" style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; display: block;"></small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="user-role">Role Akses *</label>
+                        <select id="user-role" class="form-control" required>
+                            <option value="Panitia">Panitia (Catat Zakat & Distribusi)</option>
+                            <option value="Bendahara">Bendahara (+ Laporan & Rekapitulasi)</option>
+                            <option value="Admin">Admin (Akses Penuh & Backup)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-small" id="btn-cancel-user-modal">Batal</button>
+                    <button type="submit" class="btn btn-primary btn-small">Simpan Akun</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -153,6 +238,7 @@
         let auditPage = 1;
         const auditLimit = 10;
         let auditSearch = '';
+        let currentUserId = null;
         
         document.addEventListener('DOMContentLoaded', async () => {
             // Verify access control
@@ -160,52 +246,102 @@
                 const user = await window.api.getCurrentUser();
                 if (!user) return;
                 
-                if (user.role !== 'Admin') {
-                    document.getElementById('access-denied-body').style.display = 'block';
-                    return;
-                }
-                
-                // Authorised Admin
-                document.getElementById('settings-content-body').style.display = 'block';
+                currentUserId = user.id;
                 
                 // Show session info
                 document.getElementById('session-username').innerText = user.username;
                 document.getElementById('session-role').innerText = user.role;
                 
-                // Load data
-                fetchBackups();
-                fetchAuditLogs();
+                // Show content
+                document.getElementById('settings-content-body').style.display = 'block';
                 
-                // Hook backup creator
-                document.getElementById('btn-create-backup').addEventListener('click', createNewBackup);
-                
-                // Hook audit log search
-                let searchTimeout;
-                document.getElementById('audit-search').addEventListener('input', (e) => {
-                    clearTimeout(searchTimeout);
-                    searchTimeout = setTimeout(() => {
-                        auditSearch = e.target.value;
-                        auditPage = 1;
-                        fetchAuditLogs();
-                    }, 400);
-                });
-                
-                // Audit Pagination
-                document.getElementById('btn-prev-audit').addEventListener('click', () => {
-                    if (auditPage > 1) {
-                        auditPage--;
-                        fetchAuditLogs();
-                    }
-                });
-                
-                document.getElementById('btn-next-audit').addEventListener('click', () => {
-                    auditPage++;
+                // Check if Admin
+                const adminElements = document.querySelectorAll('.admin-only');
+                if (user.role === 'Admin') {
+                    adminElements.forEach(el => el.classList.remove('hidden'));
+                    
+                    // Load Admin Data
+                    fetchBackups();
                     fetchAuditLogs();
-                });
+                    fetchUsers();
+                    
+                    // Hook backup creator
+                    document.getElementById('btn-create-backup').addEventListener('click', createNewBackup);
+                    
+                    // Hook user management UI events
+                    document.getElementById('btn-tambah-user').addEventListener('click', () => openUserModal());
+                    document.getElementById('btn-close-user-modal').addEventListener('click', closeUserModal);
+                    document.getElementById('btn-cancel-user-modal').addEventListener('click', closeUserModal);
+                    document.getElementById('user-form').addEventListener('submit', handleUserSubmit);
+                    
+                    // Hook audit log search
+                    let searchTimeout;
+                    document.getElementById('audit-search').addEventListener('input', (e) => {
+                        clearTimeout(searchTimeout);
+                        searchTimeout = setTimeout(() => {
+                            auditSearch = e.target.value;
+                            auditPage = 1;
+                            fetchAuditLogs();
+                        }, 400);
+                    });
+                    
+                    // Audit Pagination
+                    document.getElementById('btn-prev-audit').addEventListener('click', () => {
+                        if (auditPage > 1) {
+                            auditPage--;
+                            fetchAuditLogs();
+                        }
+                    });
+                    
+                    document.getElementById('btn-next-audit').addEventListener('click', () => {
+                        auditPage++;
+                        fetchAuditLogs();
+                    });
+                } else {
+                    adminElements.forEach(el => el.classList.add('hidden'));
+                }
+                
+                // Hook Change Password Form (Accessible to all)
+                document.getElementById('change-pwd-form').addEventListener('submit', handlePasswordChange);
                 
             }, 100);
         });
         
+        // --- Password Change ---
+        async function handlePasswordChange(e) {
+            e.preventDefault();
+            
+            const oldPassword = document.getElementById('old-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            
+            if (newPassword !== confirmPassword) {
+                showToast('Konfirmasi password baru tidak cocok.', 'error');
+                return;
+            }
+            
+            if (newPassword.length < 4) {
+                showToast('Password baru minimal 4 karakter.', 'error');
+                return;
+            }
+            
+            showLoading(true);
+            try {
+                const res = await window.api.changePassword({ oldPassword, newPassword });
+                showLoading(false);
+                if (res.success) {
+                    showToast('Kata sandi berhasil diperbarui!', 'success');
+                    document.getElementById('change-pwd-form').reset();
+                } else {
+                    showToast(res.message, 'error');
+                }
+            } catch (err) {
+                showLoading(false);
+                showToast('Terjadi kesalahan: ' + err.message, 'error');
+            }
+        }
+        
+        // --- Backup & Restore ---
         async function fetchBackups() {
             try {
                 const res = await window.api.listBackups();
@@ -252,9 +388,9 @@
                         showLoading(false);
                         if (result.success) {
                             showToast('Database berhasil dipulihkan dari file backup!', 'success');
-                            // Reload settings and audit logs
                             fetchBackups();
                             fetchAuditLogs();
+                            fetchUsers();
                         } else {
                             showToast(result.message, 'error');
                         }
@@ -280,6 +416,149 @@
             }
         }
         
+        // --- User Management ---
+        async function fetchUsers() {
+            try {
+                const res = await window.api.listUsers();
+                if (res.success) {
+                    renderUsersTable(res.data);
+                } else {
+                    showToast(res.message, 'error');
+                }
+            } catch (err) {
+                console.error('Error fetching users:', err);
+            }
+        }
+        
+        function renderUsersTable(users) {
+            const body = document.getElementById('users-table-body');
+            body.innerHTML = '';
+            
+            if (users.length === 0) {
+                body.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-secondary); padding: 12px;">Tidak ada user terdaftar.</td></tr>`;
+                return;
+            }
+            
+            users.forEach(u => {
+                const tr = document.createElement('tr');
+                const isSelf = u.id === currentUserId;
+                const badgeClass = u.role === 'Admin' ? 'badge-green' : (u.role === 'Bendahara' ? 'badge-blue' : 'badge-orange');
+                
+                tr.innerHTML = `
+                    <td style="font-weight: 600;">${u.username} ${isSelf ? '<small style="color: var(--text-secondary); font-weight: normal;">(Anda)</small>' : ''}</td>
+                    <td><span class="badge ${badgeClass}">${u.role}</span></td>
+                    <td style="text-align: center;">
+                        <button class="btn btn-secondary btn-small btn-edit-user" style="margin-right: 4px;" 
+                            data-id="${u.id}" data-username="${u.username}" data-role="${u.role}">Ubah</button>
+                        <button class="btn btn-danger btn-small btn-delete-user" data-id="${u.id}" data-username="${u.username}" ${isSelf ? 'disabled' : ''}>Hapus</button>
+                    </td>
+                `;
+                body.appendChild(tr);
+            });
+            
+            // Hook edit user click
+            document.querySelectorAll('.btn-edit-user').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const ds = e.target.dataset;
+                    openUserModal(ds.id, ds.username, ds.role);
+                });
+            });
+            
+            // Hook delete user click
+            document.querySelectorAll('.btn-delete-user').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    const username = e.target.dataset.username;
+                    showConfirm('Hapus Pengguna', `Apakah Anda yakin ingin menghapus akun "${username}"? Akun ini tidak akan dapat login lagi ke sistem.`, async () => {
+                        showLoading(true);
+                        const res = await window.api.deleteUser(id);
+                        showLoading(false);
+                        if (res.success) {
+                            showToast(`Akun "${username}" berhasil dihapus.`, 'success');
+                            fetchUsers();
+                            fetchAuditLogs();
+                        } else {
+                            showToast(res.message, 'error');
+                        }
+                    });
+                });
+            });
+        }
+        
+        function openUserModal(id = '', username = '', role = 'Panitia') {
+            document.getElementById('user-id').value = id;
+            document.getElementById('user-username').value = username;
+            document.getElementById('user-role').value = role;
+            
+            const pwdInput = document.getElementById('user-password');
+            const pwdStar = document.getElementById('pwd-required-star');
+            const pwdHelp = document.getElementById('user-password-help');
+            
+            pwdInput.value = '';
+            
+            if (id) {
+                document.getElementById('user-modal-title').innerText = 'Ubah Akun Pengguna';
+                pwdStar.style.display = 'none';
+                pwdInput.required = false;
+                pwdHelp.innerText = 'Kosongkan jika tidak ingin mengubah kata sandi.';
+            } else {
+                document.getElementById('user-modal-title').innerText = 'Tambah Pengguna Baru';
+                pwdStar.style.display = 'inline';
+                pwdInput.required = true;
+                pwdHelp.innerText = 'Kata sandi minimal 4 karakter.';
+            }
+            
+            document.getElementById('user-modal').classList.add('open');
+        }
+        
+        function closeUserModal() {
+            document.getElementById('user-modal').classList.remove('open');
+            document.getElementById('user-form').reset();
+        }
+        
+        async function handleUserSubmit(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('user-id').value;
+            const username = document.getElementById('user-username').value;
+            const password = document.getElementById('user-password').value;
+            const role = document.getElementById('user-role').value;
+            
+            if (!id && !password) {
+                showToast('Password wajib diisi untuk pengguna baru.', 'error');
+                return;
+            }
+            
+            if (password && password.length < 4) {
+                showToast('Password minimal 4 karakter.', 'error');
+                return;
+            }
+            
+            showLoading(true);
+            try {
+                let res;
+                if (id) {
+                    res = await window.api.updateUser({ id: parseInt(id), username, password, role });
+                } else {
+                    res = await window.api.createUser({ username, password, role });
+                }
+                showLoading(false);
+                
+                if (res.success) {
+                    showToast(id ? 'Data pengguna berhasil diperbarui.' : 'Pengguna baru berhasil ditambahkan.', 'success');
+                    closeUserModal();
+                    fetchUsers();
+                    fetchAuditLogs();
+                } else {
+                    showToast(res.message, 'error');
+                }
+            } catch (err) {
+                showLoading(false);
+                showToast('Terjadi kesalahan: ' + err.message, 'error');
+            }
+        }
+        
+        // --- Audit Logs ---
         async function fetchAuditLogs() {
             try {
                 const res = await window.api.listAuditLogs({

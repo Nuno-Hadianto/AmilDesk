@@ -63,25 +63,29 @@ function initTransaksiIPC() {
             if (!tanggal) {
                 return { success: false, message: 'Tanggal transaksi wajib diisi.' };
             }
-            if (!muzakki_id) {
-                return { success: false, message: 'Muzakki wajib dipilih.' };
-            }
             if (!jenis_zakat) {
                 return { success: false, message: 'Jenis zakat wajib dipilih.' };
             }
             
-            const muzakki = db.prepare('SELECT nama FROM muzakki WHERE id = ?').get(muzakki_id);
-            if (!muzakki) {
-                return { success: false, message: 'Muzakki tidak valid.' };
+            let db_muzakki_id = null;
+            let muzakkiNama = 'Umum/Anonim';
+            
+            if (muzakki_id && muzakki_id !== 0) {
+                const muzakki = db.prepare('SELECT nama FROM muzakki WHERE id = ?').get(muzakki_id);
+                if (!muzakki) {
+                    return { success: false, message: 'Muzakki tidak valid.' };
+                }
+                db_muzakki_id = muzakki_id;
+                muzakkiNama = muzakki.nama;
             }
             
             const stmt = db.prepare(`
                 INSERT INTO transaksi (tanggal, muzakki_id, jenis_zakat, jumlah_jiwa, jumlah_uang, jumlah_beras, keterangan, created_by)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             `);
-            const result = stmt.run(tanggal, muzakki_id, jenis_zakat, jumlah_jiwa, jumlah_uang, jumlah_beras, keterangan, session.id);
+            const result = stmt.run(tanggal, db_muzakki_id, jenis_zakat, jumlah_jiwa, jumlah_uang, jumlah_beras, keterangan, session.id);
             
-            logAudit(session.id, session.username, `Mencatat transaksi masuk (${jenis_zakat}) dari Muzakki ${muzakki.nama}: Rp${jumlah_uang.toLocaleString('id-ID')} / ${jumlah_beras} kg beras (ID: ${result.lastInsertRowid})`);
+            logAudit(session.id, session.username, `Mencatat transaksi masuk (${jenis_zakat}) dari Muzakki ${muzakkiNama}: Rp${jumlah_uang.toLocaleString('id-ID')} / ${jumlah_beras} kg beras (ID: ${result.lastInsertRowid})`);
             
             return { success: true, id: result.lastInsertRowid };
         } catch (error) {
@@ -100,8 +104,8 @@ function initTransaksiIPC() {
             if (!id) {
                 return { success: false, message: 'ID transaksi tidak ditemukan.' };
             }
-            if (!tanggal || !muzakki_id || !jenis_zakat) {
-                return { success: false, message: 'Tanggal, muzakki, dan jenis zakat wajib diisi.' };
+            if (!tanggal || !jenis_zakat) {
+                return { success: false, message: 'Tanggal dan jenis zakat wajib diisi.' };
             }
             
             const original = db.prepare('SELECT t.jenis_zakat, m.nama FROM transaksi t LEFT JOIN muzakki m ON t.muzakki_id = m.id WHERE t.id = ?').get(id);
@@ -109,9 +113,16 @@ function initTransaksiIPC() {
                 return { success: false, message: 'Data transaksi tidak ditemukan.' };
             }
             
-            const muzakki = db.prepare('SELECT nama FROM muzakki WHERE id = ?').get(muzakki_id);
-            if (!muzakki) {
-                return { success: false, message: 'Muzakki tidak valid.' };
+            let db_muzakki_id = null;
+            let muzakkiNama = 'Umum/Anonim';
+            
+            if (muzakki_id && muzakki_id !== 0) {
+                const muzakki = db.prepare('SELECT nama FROM muzakki WHERE id = ?').get(muzakki_id);
+                if (!muzakki) {
+                    return { success: false, message: 'Muzakki tidak valid.' };
+                }
+                db_muzakki_id = muzakki_id;
+                muzakkiNama = muzakki.nama;
             }
             
             const stmt = db.prepare(`
@@ -119,9 +130,9 @@ function initTransaksiIPC() {
                 SET tanggal = ?, muzakki_id = ?, jenis_zakat = ?, jumlah_jiwa = ?, jumlah_uang = ?, jumlah_beras = ?, keterangan = ?
                 WHERE id = ?
             `);
-            stmt.run(tanggal, muzakki_id, jenis_zakat, jumlah_jiwa, jumlah_uang, jumlah_beras, keterangan, id);
+            stmt.run(tanggal, db_muzakki_id, jenis_zakat, jumlah_jiwa, jumlah_uang, jumlah_beras, keterangan, id);
             
-            logAudit(session.id, session.username, `Mengubah transaksi ID ${id} (${original.jenis_zakat}) Muzakki ${original.nama} -> (${jenis_zakat}) Muzakki ${muzakki.nama}: Rp${jumlah_uang.toLocaleString('id-ID')} / ${jumlah_beras} kg beras`);
+            logAudit(session.id, session.username, `Mengubah transaksi ID ${id} (${original.jenis_zakat}) Muzakki ${original.nama || 'Umum/Anonim'} -> (${jenis_zakat}) Muzakki ${muzakkiNama}: Rp${jumlah_uang.toLocaleString('id-ID')} / ${jumlah_beras} kg beras`);
             
             return { success: true };
         } catch (error) {

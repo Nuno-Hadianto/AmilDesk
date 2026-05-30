@@ -89,14 +89,12 @@ function injectSidebar(user) {
         `;
     }
 
-    // Settings (Backup / Audit Log) only visible to Admin
-    if (isAdmin) {
-        menuHtml += `
-            <a href="settings.html" class="menu-item ${currentFile === 'settings.html' ? 'active' : ''}">
-                ${ICONS.settings} <span>Pengaturan & Backup</span>
-            </a>
-        `;
-    }
+    // Settings visible to all users (roles check handled inside page)
+    menuHtml += `
+        <a href="settings.html" class="menu-item ${currentFile === 'settings.html' ? 'active' : ''}">
+            ${ICONS.settings} <span>Pengaturan</span>
+        </a>
+    `;
 
     // Build sidebar
     const sidebarHtml = `
@@ -158,7 +156,7 @@ function injectHeader(user) {
         'mustahik.html': { title: 'Data Mustahik', desc: 'Kelola data mustahik (penerima zakat) berdasarkan 8 asnaf.' },
         'distribusi.html': { title: 'Penyaluran Zakat', desc: 'Pencatatan distribusi dana dan beras zakat kepada mustahik yang berhak.' },
         'laporan.html': { title: 'Laporan & Rekapitulasi', desc: 'Filter data pemasukan, pengeluaran, saldo akhir, dan ekspor dokumen.' },
-        'settings.html': { title: 'Pengaturan & Backup', desc: 'Backup/Restore database SQLite dan periksa logs aktivitas (Audit Log).' }
+        'settings.html': { title: 'Pengaturan Sistem', desc: 'Kelola kata sandi, manajemen pengguna, backup database, dan log aktivitas.' }
     };
 
     const currentFile = window.location.pathname.split('/').pop() || 'dashboard.html';

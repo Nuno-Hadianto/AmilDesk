@@ -41,5 +41,12 @@ contextBridge.exposeInMainWorld('api', {
     listBackups: () => ipcRenderer.invoke('backup:list'),
     createBackup: () => ipcRenderer.invoke('backup:create'),
     restoreBackup: (filename) => ipcRenderer.invoke('backup:restore', filename),
-    listAuditLogs: (params) => ipcRenderer.invoke('audit:list', params)
+    listAuditLogs: (params) => ipcRenderer.invoke('audit:list', params),
+    
+    // Users Management
+    listUsers: () => ipcRenderer.invoke('users:list'),
+    createUser: (data) => ipcRenderer.invoke('users:create', data),
+    updateUser: (data) => ipcRenderer.invoke('users:update', data),
+    deleteUser: (id) => ipcRenderer.invoke('users:delete', id),
+    changePassword: (data) => ipcRenderer.invoke('users:change-password', data)
 });

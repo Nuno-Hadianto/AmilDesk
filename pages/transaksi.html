@@ -250,7 +250,7 @@
                 if (res.success) {
                     muzakkiList = res.data;
                     const select = document.getElementById('muzakki_id');
-                    select.innerHTML = '<option value="">-- Pilih Muzakki --</option>';
+                    select.innerHTML = '<option value="0">Umum / Tanpa Nama (Anonim)</option>';
                     muzakkiList.forEach(m => {
                         const opt = document.createElement('option');
                         opt.value = m.id;
@@ -313,7 +313,7 @@
                 tr.innerHTML = `
                     <td>${startNum + idx}</td>
                     <td>${formatDate(row.tanggal)}</td>
-                    <td style="font-weight: 600;">${row.muzakki_nama || '<span style="color: var(--text-light)">Bukan Muzakki</span>'}</td>
+                    <td style="font-weight: 600;">${row.muzakki_nama || 'Umum / Anonim'}</td>
                     <td><span class="badge ${getBadgeClass(row.jenis_zakat)}">${row.jenis_zakat}</span></td>
                     <td style="text-align: right; font-variant-numeric: tabular-nums;">${row.jumlah_jiwa || 0}</td>
                     <td style="text-align: right; font-weight: 600; font-variant-numeric: tabular-nums;">${row.jumlah_uang > 0 ? formatIDR(row.jumlah_uang) : '-'}</td>
@@ -389,7 +389,7 @@
             }
             
             document.getElementById('tanggal').value = tanggal;
-            document.getElementById('muzakki_id').value = muzakki_id;
+            document.getElementById('muzakki_id').value = muzakki_id || '0';
             document.getElementById('jenis_zakat').value = jenis_zakat;
             document.getElementById('jumlah_jiwa').value = jumlah_jiwa;
             document.getElementById('jumlah_uang').value = jumlah_uang;
@@ -415,17 +415,13 @@
             
             const id = document.getElementById('transaksi-id').value;
             const tanggal = document.getElementById('tanggal').value;
-            const muzakki_id = parseInt(document.getElementById('muzakki_id').value);
+            const muzakki_id = parseInt(document.getElementById('muzakki_id').value) || 0;
             const jenis_zakat = document.getElementById('jenis_zakat').value;
             const jumlah_jiwa = parseInt(document.getElementById('jumlah_jiwa').value) || 0;
             const jumlah_uang = parseFloat(document.getElementById('jumlah_uang').value) || 0;
             const jumlah_beras = parseFloat(document.getElementById('jumlah_beras').value) || 0;
             const keterangan = document.getElementById('keterangan').value;
             
-            if (!muzakki_id) {
-                showToast('Mohon pilih muzakki.', 'error');
-                return;
-            }
             if (jumlah_uang === 0 && jumlah_beras === 0) {
                 showToast('Jumlah uang atau beras wajib diisi salah satu.', 'error');
                 return;
