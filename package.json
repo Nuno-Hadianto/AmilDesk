@@ -7,8 +7,8 @@
     "start": "electron .",
     "rebuild": "electron-rebuild -f -w better-sqlite3",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder",
-    "release": "electron-builder"
+    "dist": "electron-builder --publish never",
+    "release": "electron-builder --publish never"
   },
   "keywords": [
     "zakat",

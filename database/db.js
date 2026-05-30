@@ -1,13 +1,30 @@
+const { app } = require('electron');
 const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
 
-const dbDir = path.join(__dirname);
-const dbPath = path.join(dbDir, 'amildesk.db');
-const schemaPath = path.join(dbDir, 'schema.sql');
+// Determine database and backup directories (writable outside read-only app.asar)
+let dbDir;
+try {
+    if (app && app.isPackaged) {
+        dbDir = path.join(app.getPath('userData'), 'database');
+    } else {
+        dbDir = __dirname;
+    }
+} catch (e) {
+    dbDir = __dirname;
+}
 
-// Make sure backup directory exists
+// Make sure the database directory exists
+if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir, { recursive: true });
+}
+
+const dbPath = path.join(dbDir, 'amildesk.db');
+const schemaPath = path.join(__dirname, 'schema.sql');
+
+// Make sure the backup directory exists
 const backupDir = path.join(dbDir, 'backup');
 if (!fs.existsSync(backupDir)) {
     fs.mkdirSync(backupDir, { recursive: true });
