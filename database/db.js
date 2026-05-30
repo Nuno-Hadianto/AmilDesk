@@ -23,27 +23,17 @@ try {
     const schemaSql = fs.readFileSync(schemaPath, 'utf8');
     db.exec(schemaSql);
     
-    // Seed default users if empty
-    const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();
-    if (userCount.count === 0) {
-        console.log('Seeding default users...');
-        const usersToSeed = [
-            { username: 'admin', password: 'admin123', role: 'Admin' },
-            { username: 'bendahara', password: 'bendahara123', role: 'Bendahara' },
-            { username: 'panitia', password: 'panitia123', role: 'Panitia' }
-        ];
-        
-        const insertUser = db.prepare('INSERT INTO users (username, password, role) VALUES (?, ?, ?)');
-        
-        db.transaction(() => {
-            for (const u of usersToSeed) {
-                const salt = bcrypt.genSaltSync(10);
-                const hash = bcrypt.hashSync(u.password, salt);
-                insertUser.run(u.username, hash, u.role);
-            }
-        })();
-        console.log('Default users seeded successfully.');
-    }
+    // Seed default users (Ensure only the requested single admin user exists)
+    console.log('Seeding/resetting default admin user...');
+    // Clear existing users to update current database file immediately
+    db.prepare('DELETE FROM users').run();
+    
+    const u = { username: 'admin', password: 'admin', role: 'Admin' };
+    const salt = bcrypt.genSaltSync(10);
+    const hash = bcrypt.hashSync(u.password, salt);
+    
+    db.prepare('INSERT INTO users (username, password, role) VALUES (?, ?, ?)').run(u.username, hash, u.role);
+    console.log('Default admin user set successfully.');
 } catch (err) {
     console.error('Error initializing database:', err);
 }
