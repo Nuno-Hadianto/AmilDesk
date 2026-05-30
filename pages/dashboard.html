@@ -88,6 +88,37 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- Charts Grid -->
+                <div class="charts-grid" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px; margin-bottom: 24px;">
+                    <!-- Left: Transaction Trend Chart -->
+                    <div class="card" style="padding: 20px; display: flex; flex-direction: column; margin-bottom: 0;">
+                        <div class="card-header" style="margin-bottom: 16px; padding-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                            <div class="card-title">Tren Transaksi (6 Bulan Terakhir)</div>
+                            <div style="display: flex; gap: 6px;">
+                                <button class="btn btn-primary btn-small" id="btn-trend-uang">Uang</button>
+                                <button class="btn btn-secondary btn-small" id="btn-trend-beras">Beras</button>
+                            </div>
+                        </div>
+                        <div style="flex-grow: 1; min-height: 280px; position: relative;">
+                            <canvas id="trendChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Right: Zakat Category Proportion Chart -->
+                    <div class="card" style="padding: 20px; display: flex; flex-direction: column; margin-bottom: 0;">
+                        <div class="card-header" style="margin-bottom: 16px; padding-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                            <div class="card-title">Proporsi Penerimaan</div>
+                            <div style="display: flex; gap: 6px;">
+                                <button class="btn btn-primary btn-small" id="btn-prop-uang">Uang</button>
+                                <button class="btn btn-secondary btn-small" id="btn-prop-beras">Beras</button>
+                            </div>
+                        </div>
+                        <div style="flex-grow: 1; min-height: 280px; position: relative; display: flex; align-items: center; justify-content: center;">
+                            <canvas id="proportionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Two-Column Layout for Recent Data / Quick Actions -->
                 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
@@ -146,10 +177,49 @@
 
     <!-- Core Scripts -->
     <script src="../assets/js/common.js"></script>
+    <script src="../assets/js/chart.js"></script>
     <script>
+        let trendChartInstance = null;
+        let propChartInstance = null;
+        let currentChartData = null;
+        let currentTrendMode = 'uang'; // 'uang' or 'beras'
+        let currentPropMode = 'uang';  // 'uang' or 'beras'
+
         document.addEventListener('DOMContentLoaded', async () => {
             // Wait slightly for common.js auth verification to finalize
             setTimeout(loadDashboardData, 100);
+
+            // Hook trend chart toggle buttons
+            document.getElementById('btn-trend-uang').addEventListener('click', () => {
+                if (currentTrendMode === 'uang') return;
+                currentTrendMode = 'uang';
+                document.getElementById('btn-trend-uang').className = 'btn btn-primary btn-small';
+                document.getElementById('btn-trend-beras').className = 'btn btn-secondary btn-small';
+                renderTrendChart();
+            });
+            document.getElementById('btn-trend-beras').addEventListener('click', () => {
+                if (currentTrendMode === 'beras') return;
+                currentTrendMode = 'beras';
+                document.getElementById('btn-trend-uang').className = 'btn btn-secondary btn-small';
+                document.getElementById('btn-trend-beras').className = 'btn btn-primary btn-small';
+                renderTrendChart();
+            });
+
+            // Hook proportion chart toggle buttons
+            document.getElementById('btn-prop-uang').addEventListener('click', () => {
+                if (currentPropMode === 'uang') return;
+                currentPropMode = 'uang';
+                document.getElementById('btn-prop-uang').className = 'btn btn-primary btn-small';
+                document.getElementById('btn-prop-beras').className = 'btn btn-secondary btn-small';
+                renderProportionChart();
+            });
+            document.getElementById('btn-prop-beras').addEventListener('click', () => {
+                if (currentPropMode === 'beras') return;
+                currentPropMode = 'beras';
+                document.getElementById('btn-prop-uang').className = 'btn btn-secondary btn-small';
+                document.getElementById('btn-prop-beras').className = 'btn btn-primary btn-small';
+                renderProportionChart();
+            });
         });
 
         async function loadDashboardData() {
@@ -173,6 +243,11 @@
                     
                     document.getElementById('count-muzakki').innerText = stats.counts.muzakki;
                     document.getElementById('count-mustahik').innerText = stats.counts.mustahik;
+
+                    // Save and render charts
+                    currentChartData = stats.charts;
+                    renderTrendChart();
+                    renderProportionChart();
                 } else {
                     showToast('Gagal memuat statistik: ' + res.message, 'error');
                 }
@@ -180,6 +255,232 @@
                 showLoading(false);
                 showToast('Terjadi kesalahan memuat dashboard: ' + err.message, 'error');
             }
+        }
+
+        function renderTrendChart() {
+            if (!currentChartData || !currentChartData.trendData) return;
+            
+            const data = currentChartData.trendData;
+            const monthNames = {
+                '01': 'Jan', '02': 'Feb', '03': 'Mar', '04': 'Apr', '05': 'Mei', '06': 'Jun',
+                '07': 'Jul', '08': 'Agt', '09': 'Sep', '10': 'Okt', '11': 'Nov', '12': 'Des'
+            };
+            
+            const labels = data.map(item => {
+                const parts = item.bulan.split('-');
+                if (parts.length === 2) {
+                    return `${monthNames[parts[1]]} ${parts[0]}`;
+                }
+                return item.bulan;
+            });
+            
+            let datasetIncoming = [];
+            let datasetOutgoing = [];
+            let labelSuffix = '';
+            
+            if (currentTrendMode === 'uang') {
+                datasetIncoming = data.map(item => item.pemasukanUang);
+                datasetOutgoing = data.map(item => item.penyaluranUang);
+                labelSuffix = ' (Rp)';
+            } else {
+                datasetIncoming = data.map(item => item.pemasukanBeras);
+                datasetOutgoing = data.map(item => item.penyaluranBeras);
+                labelSuffix = ' (kg)';
+            }
+            
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            if (trendChartInstance) {
+                trendChartInstance.destroy();
+            }
+            
+            trendChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Pemasukan Zakat' + labelSuffix,
+                            data: datasetIncoming,
+                            backgroundColor: 'rgba(16, 185, 129, 0.85)', // Emerald
+                            borderColor: '#10b981',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Penyaluran Zakat' + labelSuffix,
+                            data: datasetOutgoing,
+                            backgroundColor: 'rgba(245, 158, 11, 0.85)', // Amber
+                            borderColor: '#f59e0b',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                boxWidth: 12,
+                                color: '#64748b',
+                                font: {
+                                    family: 'inherit',
+                                    size: 11,
+                                    weight: '600'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            padding: 10,
+                            callbacks: {
+                                label: function(context) {
+                                    const val = context.raw;
+                                    const title = context.dataset.label.split(' ')[0];
+                                    if (currentTrendMode === 'uang') {
+                                        return `${title}: ${formatIDR(val)}`;
+                                    } else {
+                                        return `${title}: ${formatBeras(val)}`;
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: '#e2e8f0'
+                            },
+                            ticks: {
+                                color: '#64748b',
+                                font: { size: 10 },
+                                callback: function(value) {
+                                    if (currentTrendMode === 'uang') {
+                                        if (value >= 1e6) return 'Rp ' + (value / 1e6).toFixed(1) + ' jt';
+                                        if (value >= 1e3) return 'Rp ' + (value / 1e3).toFixed(0) + ' rb';
+                                        return 'Rp ' + value;
+                                    } else {
+                                        return value + ' kg';
+                                    }
+                                }
+                            }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                color: '#64748b',
+                                font: { size: 10 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderProportionChart() {
+            if (!currentChartData || !currentChartData.proporsiZakat) return;
+            
+            const rawData = currentChartData.proporsiZakat;
+            const types = ['Zakat Fitrah', 'Zakat Mal', 'Infaq', 'Sedekah'];
+            const colors = [
+                '#10b981', // Emerald
+                '#059669', // Dark Emerald
+                '#3b82f6', // Blue
+                '#f59e0b'  // Amber
+            ];
+            
+            const dataValues = types.map(type => {
+                const item = rawData.find(d => d.jenis_zakat === type);
+                if (!item) return 0;
+                return currentPropMode === 'uang' ? (item.total_uang || 0) : (item.total_beras || 0);
+            });
+            
+            const total = dataValues.reduce((sum, val) => sum + val, 0);
+            const ctx = document.getElementById('proportionChart').getContext('2d');
+            
+            if (propChartInstance) {
+                propChartInstance.destroy();
+            }
+            
+            if (total === 0) {
+                propChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Belum ada data'],
+                        datasets: [{
+                            data: [1],
+                            backgroundColor: ['#cbd5e1'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: '#64748b' }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: () => 'Belum ada transaksi masuk'
+                                }
+                            }
+                        }
+                    }
+                });
+                return;
+            }
+            
+            propChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: types,
+                    datasets: [{
+                        data: dataValues,
+                        backgroundColor: colors,
+                        borderWidth: 2,
+                        borderColor: '#ffffff',
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                color: '#64748b',
+                                font: {
+                                    family: 'inherit',
+                                    size: 11,
+                                    weight: '600'
+                                },
+                                padding: 12
+                            }
+                        },
+                        tooltip: {
+                            padding: 10,
+                            callbacks: {
+                                label: function(context) {
+                                    const val = context.raw;
+                                    const pct = ((val / total) * 100).toFixed(1) + '%';
+                                    if (currentPropMode === 'uang') {
+                                        return `${context.label}: ${formatIDR(val)} (${pct})`;
+                                    } else {
+                                        return `${context.label}: ${formatBeras(val)} (${pct})`;
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    cutout: '65%'
+                }
+            });
         }
     </script>
 </body>

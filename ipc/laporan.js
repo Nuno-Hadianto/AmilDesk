@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 
 function initLaporanIPC() {
-    // Get general dashboard statistics
+    // Get general dashboard statistics and chart data
     ipcMain.handle('laporan:dashboard-stats', async () => {
         try {
             const income = db.prepare('SELECT SUM(jumlah_uang) as total_uang, SUM(jumlah_beras) as total_beras FROM transaksi').get();
@@ -27,6 +27,72 @@ function initLaporanIPC() {
             const mustahikCount = db.prepare('SELECT COUNT(*) as count FROM mustahik').get().count;
             const transaksiCount = db.prepare('SELECT COUNT(*) as count FROM transaksi').get().count;
             
+            // 1. Proportion of zakat by category
+            const proporsiZakat = db.prepare(`
+                SELECT jenis_zakat, 
+                       SUM(jumlah_uang) as total_uang, 
+                       SUM(jumlah_beras) as total_beras 
+                FROM transaksi 
+                GROUP BY jenis_zakat
+            `).all();
+            
+            // 2. Trend data (incoming and outgoing) grouped by month
+            const trendPemasukan = db.prepare(`
+                SELECT strftime('%Y-%m', tanggal) as bulan, 
+                       SUM(jumlah_uang) as total_uang, 
+                       SUM(jumlah_beras) as total_beras 
+                FROM transaksi 
+                GROUP BY bulan 
+                ORDER BY bulan DESC 
+                LIMIT 12
+            `).all();
+            
+            const trendPenyaluran = db.prepare(`
+                SELECT strftime('%Y-%m', tanggal) as bulan, 
+                       SUM(jumlah_uang) as total_uang, 
+                       SUM(jumlah_beras) as total_beras 
+                FROM distribusi 
+                GROUP BY bulan 
+                ORDER BY bulan DESC 
+                LIMIT 12
+            `).all();
+            
+            // Consolidate all unique months from both lists to align them
+            const allMonthsSet = new Set();
+            trendPemasukan.forEach(row => allMonthsSet.add(row.bulan));
+            trendPenyaluran.forEach(row => allMonthsSet.add(row.bulan));
+            
+            // Fallback if no transactions yet
+            if (allMonthsSet.size === 0) {
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                allMonthsSet.add(`${yyyy}-${mm}`);
+            }
+            
+            // Sort chronologically and take the last 6 months
+            const sortedMonths = Array.from(allMonthsSet).sort().slice(-6);
+            
+            // Map data for fast lookup
+            const pemMap = {};
+            trendPemasukan.forEach(row => { pemMap[row.bulan] = row; });
+            
+            const penyMap = {};
+            trendPenyaluran.forEach(row => { penyMap[row.bulan] = row; });
+            
+            // Align the monthly arrays
+            const trendDataAligned = sortedMonths.map(bulan => {
+                const pem = pemMap[bulan] || { total_uang: 0, total_beras: 0 };
+                const peny = penyMap[bulan] || { total_uang: 0, total_beras: 0 };
+                return {
+                    bulan,
+                    pemasukanUang: pem.total_uang || 0,
+                    pemasukanBeras: pem.total_beras || 0,
+                    penyaluranUang: peny.total_uang || 0,
+                    penyaluranBeras: peny.total_beras || 0
+                };
+            });
+            
             return {
                 success: true,
                 stats: {
@@ -40,6 +106,10 @@ function initLaporanIPC() {
                         muzakki: muzakkiCount,
                         mustahik: mustahikCount,
                         transaksi: transaksiCount
+                    },
+                    charts: {
+                        proporsiZakat,
+                        trendData: trendDataAligned
                     }
                 }
             };
