@@ -68,3 +68,8 @@ CREATE INDEX IF NOT EXISTS idx_transaksi_tanggal ON transaksi(tanggal);
 CREATE INDEX IF NOT EXISTS idx_distribusi_mustahik ON distribusi(mustahik_id);
 CREATE INDEX IF NOT EXISTS idx_distribusi_tanggal ON distribusi(tanggal);
 CREATE INDEX IF NOT EXISTS idx_audit_log_tanggal ON audit_log(tanggal);
+
+CREATE TABLE IF NOT EXISTS konfigurasi (
+    kunci TEXT PRIMARY KEY,
+    nilai TEXT
+);

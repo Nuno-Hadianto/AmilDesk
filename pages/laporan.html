@@ -91,6 +91,9 @@
                         
                         <!-- Export Actions -->
                         <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-secondary" id="btn-cetak-pengumuman" disabled style="background-color: #ecfdf5; color: #047857; border-color: #a7f3d0;">
+                                Cetak Pengumuman
+                            </button>
                             <button class="btn btn-secondary" id="btn-ekspor-excel" disabled>
                                 Ekspor Excel
                             </button>
@@ -237,6 +240,7 @@
             document.getElementById('btn-tampilkan-laporan').addEventListener('click', fetchReportData);
             
             // Export actions
+            document.getElementById('btn-cetak-pengumuman').addEventListener('click', printAnnouncement);
             document.getElementById('btn-ekspor-excel').addEventListener('click', exportToExcel);
             document.getElementById('btn-ekspor-pdf').addEventListener('click', exportToPDF);
         });
@@ -334,6 +338,7 @@
             }
             
             // Enable export buttons
+            document.getElementById('btn-cetak-pengumuman').disabled = false;
             document.getElementById('btn-ekspor-excel').disabled = false;
             document.getElementById('btn-ekspor-pdf').disabled = false;
             
@@ -505,6 +510,101 @@
                 showToast('Gagal ekspor PDF: ' + err.message, 'error');
             }
         }
+
+        function printAnnouncement() {
+            if (!currentReportData) return;
+            
+            const filterType = document.getElementById('filter-type').value;
+            let dateValue = '';
+            if (filterType === 'harian') dateValue = formatDate(document.getElementById('input-harian').value);
+            else if (filterType === 'bulanan') dateValue = document.getElementById('input-bulanan').value;
+            else if (filterType === 'tahunan') dateValue = document.getElementById('input-tahunan').value;
+            else dateValue = 'Seluruh Periode';
+            
+            const summary = currentReportData.summary;
+            const printArea = document.getElementById('print-summary-area');
+            if (!printArea) return;
+            
+            printArea.innerHTML = `
+                <div class="summary-print-title">LAPORAN REKAPITULASI ZAKAT, INFAK, & SEDEKAH</div>
+                <div class="summary-print-subtitle">Masjid AmilDesk &bull; Periode: ${filterType.toUpperCase()} (${dateValue})</div>
+                
+                <h3 style="border-bottom: 1px solid #000; padding-bottom: 4px; margin-top: 15px; font-size: 13px;">1. RINGKASAN SALDO & NERACA</h3>
+                <table class="summary-print-table">
+                    <thead>
+                        <tr>
+                            <th>Kategori Metrik</th>
+                            <th style="text-align: right;">Jumlah Uang (Rupiah)</th>
+                            <th style="text-align: right;">Jumlah Beras (kg)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Total Pemasukan (ZIS Masuk)</strong></td>
+                            <td style="text-align: right; font-weight: bold; font-variant-numeric: tabular-nums;">${formatIDR(summary.uangMasuk)}</td>
+                            <td style="text-align: right; font-weight: bold; font-variant-numeric: tabular-nums;">${formatBeras(summary.berasMasuk)}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Total Penyaluran (Distribusi Mustahik)</strong></td>
+                            <td style="text-align: right; font-variant-numeric: tabular-nums;">${formatIDR(summary.uangKeluar)}</td>
+                            <td style="text-align: right; font-variant-numeric: tabular-nums;">${formatBeras(summary.berasKeluar)}</td>
+                        </tr>
+                        <tr style="background-color: #f9fafb; border-top: 2px solid #000;">
+                            <td><strong>SISA SALDO KAS MASJID (SAAT INI)</strong></td>
+                            <td style="text-align: right; font-weight: bold; font-variant-numeric: tabular-nums; color: #047857;">${formatIDR(summary.currentUang)}</td>
+                            <td style="text-align: right; font-weight: bold; font-variant-numeric: tabular-nums; color: #047857;">${formatBeras(summary.currentBeras)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <h3 style="border-bottom: 1px solid #000; padding-bottom: 4px; margin-top: 15px; font-size: 13px;">2. RINCIAN DISTRIBUSI PER ASNAF</h3>
+                <table class="summary-print-table">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Asnaf Mustahik</th>
+                            <th>Keterangan Penyaluran</th>
+                            <th style="text-align: right;">Penyaluran Uang</th>
+                            <th style="text-align: right;">Penyaluran Beras</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${compileDistributionSummaryRows()}
+                    </tbody>
+                </table>
+                
+                <div style="margin-top: 40px; display: flex; justify-content: space-between; padding: 0 40px; font-size: 11px;">
+                    <div style="text-align: center;">
+                        <div>Mengetahui,</div>
+                        <div style="margin-top: 50px; font-weight: bold; border-top: 1px solid #000; width: 150px; padding-top: 4px;">Ketua DKM</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div>Dilaporkan oleh,</div>
+                        <div style="margin-top: 50px; font-weight: bold; border-top: 1px solid #000; width: 150px; padding-top: 4px;">Bendahara Panitia</div>
+                    </div>
+                </div>
+            `;
+            
+            window.print();
+        }
+        
+        function compileDistributionSummaryRows() {
+            const list = currentReportData.distribusi;
+            if (list.length === 0) {
+                return `<tr><td colspan="5" style="text-align: center; color: #4b5563;">Belum ada transaksi penyaluran pada periode ini.</td></tr>`;
+            }
+            
+            return list.map((d, i) => `
+                <tr>
+                    <td>${i + 1}</td>
+                    <td><strong>${d.mustahik_nama || 'Umum'}</strong> [${d.mustahik_kategori || 'Umum'}]</td>
+                    <td>${d.keterangan || '-'}</td>
+                    <td style="text-align: right; font-variant-numeric: tabular-nums;">${d.jumlah_uang > 0 ? formatIDR(d.jumlah_uang) : '-'}</td>
+                    <td style="text-align: right; font-variant-numeric: tabular-nums;">${d.jumlah_beras > 0 ? formatBeras(d.jumlah_beras) : '-'}</td>
+                </tr>
+            `).join('');
+        }
     </script>
+    <div id="print-summary-area"></div>
 </body>
 </html>

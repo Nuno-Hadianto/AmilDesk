@@ -129,6 +129,18 @@
                         </div>
                     </div>
                     
+                    <div class="form-group">
+                        <label for="paket_distribusi">Paket Penyaluran Otomatis (Opsional)</label>
+                        <select id="paket_distribusi" class="form-control">
+                            <option value="">-- Isi Manual (Kustom) --</option>
+                            <option value="paket_a">Paket A (Uang Rp100.000 & Beras 5 kg)</option>
+                            <option value="paket_b">Paket B (Uang Rp50.000 & Beras 3 kg)</option>
+                            <option value="paket_c">Paket C (Hanya Beras 5 kg)</option>
+                            <option value="paket_d">Paket D (Hanya Beras 2.5 kg)</option>
+                            <option value="paket_e">Paket E (Hanya Uang Rp100.000)</option>
+                        </select>
+                    </div>
+                    
                     <div class="form-row-2">
                         <div class="form-group">
                             <label for="jumlah_uang">Jumlah Uang (Rp)</label>
@@ -253,6 +265,36 @@
                 document.getElementById('quick-mustahik-modal').classList.remove('open');
             });
             document.getElementById('quick-mustahik-form').addEventListener('submit', handleQuickMustahikSubmit);
+            
+            // Hook Packet Distribution selection
+            document.getElementById('paket_distribusi').addEventListener('change', (e) => {
+                const val = e.target.value;
+                const uangInput = document.getElementById('jumlah_uang');
+                const berasInput = document.getElementById('jumlah_beras');
+                const ketInput = document.getElementById('keterangan');
+                
+                if (val === 'paket_a') {
+                    uangInput.value = 100000;
+                    berasInput.value = 5;
+                    ketInput.value = 'Penyaluran Paket A (Uang Rp100rb & Beras 5kg)';
+                } else if (val === 'paket_b') {
+                    uangInput.value = 50000;
+                    berasInput.value = 3;
+                    ketInput.value = 'Penyaluran Paket B (Uang Rp50rb & Beras 3kg)';
+                } else if (val === 'paket_c') {
+                    uangInput.value = 0;
+                    berasInput.value = 5;
+                    ketInput.value = 'Penyaluran Paket C (Beras 5kg)';
+                } else if (val === 'paket_d') {
+                    uangInput.value = 0;
+                    berasInput.value = 2.5;
+                    ketInput.value = 'Penyaluran Paket D (Beras 2.5kg)';
+                } else if (val === 'paket_e') {
+                    uangInput.value = 100000;
+                    berasInput.value = 0;
+                    ketInput.value = 'Penyaluran Paket E (Uang Rp100rb)';
+                }
+            });
             
             // Pagination buttons
             document.getElementById('btn-prev-page').addEventListener('click', () => {
@@ -428,6 +470,9 @@
             document.getElementById('jumlah_uang').value = jumlah_uang;
             document.getElementById('jumlah_beras').value = jumlah_beras;
             document.getElementById('keterangan').value = keterangan;
+            
+            // Reset paket dropdown
+            document.getElementById('paket_distribusi').value = '';
             
             if (id) {
                 document.getElementById('modal-title').innerText = 'Ubah Distribusi Zakat';

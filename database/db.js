@@ -36,6 +36,17 @@ try {
     } else {
         console.log(`Database already has ${userCount} users. Skipping default seeding.`);
     }
+    
+    // Seed default configurations (Only if configuration table is empty)
+    const configCount = db.prepare('SELECT COUNT(*) as count FROM konfigurasi').get().count;
+    if (configCount === 0) {
+        console.log('No configurations found. Seeding defaults...');
+        db.prepare("INSERT INTO konfigurasi (kunci, nilai) VALUES ('fitrah_uang', '45000')").run();
+        db.prepare("INSERT INTO konfigurasi (kunci, nilai) VALUES ('fitrah_beras', '2.5')").run();
+        console.log('Default configurations set successfully.');
+    } else {
+        console.log(`Database already has ${configCount} configurations. Skipping default seeding.`);
+    }
 } catch (err) {
     console.error('Error initializing database:', err);
 }

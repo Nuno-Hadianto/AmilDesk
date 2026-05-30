@@ -48,5 +48,13 @@ contextBridge.exposeInMainWorld('api', {
     createUser: (data) => ipcRenderer.invoke('users:create', data),
     updateUser: (data) => ipcRenderer.invoke('users:update', data),
     deleteUser: (id) => ipcRenderer.invoke('users:delete', id),
-    changePassword: (data) => ipcRenderer.invoke('users:change-password', data)
+    changePassword: (data) => ipcRenderer.invoke('users:change-password', data),
+    
+    // Configurations (Tarif Fitrah)
+    getKonfigurasi: () => ipcRenderer.invoke('settings:get-konfigurasi'),
+    saveKonfigurasi: (data) => ipcRenderer.invoke('settings:save-konfigurasi', data),
+    
+    // Excel Import
+    importMuzakkiExcel: () => ipcRenderer.invoke('muzakki:import-excel'),
+    importMustahikExcel: () => ipcRenderer.invoke('mustahik:import-excel')
 });

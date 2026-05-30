@@ -155,6 +155,44 @@ function initSettingsIPC() {
             return { success: false, message: 'Gagal memuat log audit: ' + error.message };
         }
     });
+
+    // Get configurations (tarif zakat fitrah)
+    ipcMain.handle('settings:get-konfigurasi', async () => {
+        try {
+            const rows = dbModule.db.prepare('SELECT * FROM konfigurasi').all();
+            const config = {};
+            rows.forEach(r => {
+                config[r.kunci] = r.nilai;
+            });
+            return { success: true, config };
+        } catch (error) {
+            console.error('Error getting configurations:', error);
+            return { success: false, message: 'Gagal memuat konfigurasi: ' + error.message };
+        }
+    });
+
+    // Save configurations (tarif zakat fitrah)
+    ipcMain.handle('settings:save-konfigurasi', async (event, { fitrah_uang, fitrah_beras }) => {
+        try {
+            const session = getCurrentUserSession();
+            if (!session || session.role !== 'Admin') {
+                return { success: false, message: 'Akses ditolak. Hanya Admin yang dapat merubah konfigurasi.' };
+            }
+            
+            dbModule.db.transaction(() => {
+                dbModule.db.prepare("INSERT OR REPLACE INTO konfigurasi (kunci, nilai) VALUES ('fitrah_uang', ?)")
+                    .run(String(fitrah_uang));
+                dbModule.db.prepare("INSERT OR REPLACE INTO konfigurasi (kunci, nilai) VALUES ('fitrah_beras', ?)")
+                    .run(String(fitrah_beras));
+            })();
+            
+            logAudit(session.id, session.username, `Mengubah tarif Zakat Fitrah: Rp${parseFloat(fitrah_uang).toLocaleString('id-ID')} / ${fitrah_beras} kg beras per jiwa`);
+            return { success: true };
+        } catch (error) {
+            console.error('Error saving configurations:', error);
+            return { success: false, message: 'Gagal menyimpan konfigurasi: ' + error.message };
+        }
+    });
 }
 
 module.exports = {

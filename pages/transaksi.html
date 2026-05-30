@@ -180,13 +180,40 @@
         let searchKeyword = '';
         let filterJenisZakat = '';
         let muzakkiList = [];
+        let fitrahUangRate = 45000;
+        let fitrahBerasRate = 2.5;
         
         document.addEventListener('DOMContentLoaded', () => {
             // Initial load
-            setTimeout(() => {
+            setTimeout(async () => {
                 fetchTransaksiList();
                 loadMuzakkiDropdown();
+                
+                // Fetch fitrah rates
+                try {
+                    const configRes = await window.api.getKonfigurasi();
+                    if (configRes.success && configRes.config) {
+                        fitrahUangRate = parseFloat(configRes.config.fitrah_uang) || 45000;
+                        fitrahBerasRate = parseFloat(configRes.config.fitrah_beras) || 2.5;
+                    }
+                } catch (err) {
+                    console.error("Failed to load fitrah rates:", err);
+                }
             }, 100);
+
+            // Hook calculator triggers
+            const handleFitrahCalculation = () => {
+                const jenis = document.getElementById('jenis_zakat').value;
+                const jiwa = parseInt(document.getElementById('jumlah_jiwa').value) || 0;
+                
+                if (jenis === 'Zakat Fitrah' && jiwa > 0) {
+                    // Populate values automatically. Panitia can clear the unused one manually.
+                    document.getElementById('jumlah_uang').value = jiwa * fitrahUangRate;
+                    document.getElementById('jumlah_beras').value = jiwa * fitrahBerasRate;
+                }
+            };
+            document.getElementById('jumlah_jiwa').addEventListener('input', handleFitrahCalculation);
+            document.getElementById('jenis_zakat').addEventListener('change', handleFitrahCalculation);
             
             // Search Input handler
             let searchTimeout;
@@ -320,6 +347,15 @@
                     <td style="text-align: right; font-weight: 600; font-variant-numeric: tabular-nums;">${row.jumlah_beras > 0 ? formatBeras(row.jumlah_beras) : '-'}</td>
                     <td>${row.keterangan || '-'}</td>
                     <td style="text-align: center;">
+                        <button class="btn btn-secondary btn-small btn-cetak" style="margin-right: 4px; background-color: #ecfdf5; color: #047857; border-color: #a7f3d0;" 
+                            data-id="${row.id}" 
+                            data-tanggal="${row.tanggal}" 
+                            data-muzakki="${row.muzakki_nama || 'Umum/Anonim'}" 
+                            data-jenis="${row.jenis_zakat}" 
+                            data-jiwa="${row.jumlah_jiwa}" 
+                            data-uang="${row.jumlah_uang}" 
+                            data-beras="${row.jumlah_beras}" 
+                            data-ket="${row.keterangan || ''}">Cetak</button>
                         <button class="btn btn-secondary btn-small btn-edit" style="margin-right: 4px;" 
                             data-id="${row.id}" 
                             data-tanggal="${row.tanggal}" 
@@ -340,6 +376,13 @@
             document.getElementById('btn-next-page').disabled = page >= totalPages;
             
             // Hook buttons
+            document.querySelectorAll('.btn-cetak').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const ds = e.target.dataset;
+                    triggerPrintReceipt(ds);
+                });
+            });
+            
             document.querySelectorAll('.btn-edit').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const ds = e.target.dataset;
@@ -479,6 +522,71 @@
                 showToast('Gagal menyimpan muzakki: ' + err.message, 'error');
             }
         }
+
+        function triggerPrintReceipt(ds) {
+            const printArea = document.getElementById('print-receipt-area');
+            if (!printArea) return;
+            
+            const uangVal = parseFloat(ds.uang) || 0;
+            const berasVal = parseFloat(ds.beras) || 0;
+            
+            let amountText = '';
+            if (uangVal > 0) amountText += formatIDR(uangVal);
+            if (berasVal > 0) {
+                if (amountText) amountText += ' & ';
+                amountText += formatBeras(berasVal);
+            }
+            
+            const formattedDate = formatDate(ds.tanggal);
+            const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            const transactionNo = String(ds.id).padStart(5, '0');
+            
+            printArea.innerHTML = `
+                <div class="receipt-print">
+                    <div class="receipt-print-header">
+                        <div class="receipt-print-title">MASJID AMILDESK</div>
+                        <div style="font-size: 9px; color: #4b5563; margin-top: 2px;">Bukti Tanda Terima Penerimaan ZIS</div>
+                    </div>
+                    <div class="receipt-print-body">
+                        <div class="receipt-print-row">
+                            <span>No Transaksi:</span>
+                            <strong>TRX-${transactionNo}</strong>
+                        </div>
+                        <div class="receipt-print-row">
+                            <span>Tanggal:</span>
+                            <span>${formattedDate} ${timeStr}</span>
+                        </div>
+                        <div class="receipt-print-row">
+                            <span>Muzakki:</span>
+                            <strong>${ds.muzakki}</strong>
+                        </div>
+                        <div class="receipt-print-row" style="border-top: 1px dashed #000; padding-top: 4px; margin-top: 4px;">
+                            <span>Jenis Penerimaan:</span>
+                            <span>${ds.jenis}</span>
+                        </div>
+                        <div class="receipt-print-row">
+                            <span>Jumlah Jiwa:</span>
+                            <span>${ds.jiwa || 0}</span>
+                        </div>
+                        <div class="receipt-print-row">
+                            <span>Jumlah Bayar:</span>
+                            <strong style="font-size: 11px; color: #047857;">${amountText || '-'}</strong>
+                        </div>
+                        <div class="receipt-print-row" style="margin-top: 4px;">
+                            <span>Keterangan:</span>
+                            <span style="font-style: italic; max-width: 140px; text-align: right;">${ds.ket || '-'}</span>
+                        </div>
+                    </div>
+                    <div class="receipt-print-footer">
+                        <div>Terima kasih atas Zakat, Infak, & Sedekah Anda.</div>
+                        <div style="font-weight: bold; margin-top: 2px;">Semoga Allah melimpahkan berkah dan pahala.</div>
+                    </div>
+                </div>
+            `;
+            
+            window.print();
+        }
     </script>
+    <div id="print-receipt-area"></div>
 </body>
 </html>

@@ -1,6 +1,7 @@
-const { ipcMain } = require('electron');
+const { ipcMain, dialog } = require('electron');
 const { db, logAudit } = require('../database/db');
 const { getCurrentUserSession } = require('./auth');
+const XLSX = require('xlsx');
 
 const ASNAF_CATEGORIES = ['Fakir', 'Miskin', 'Amil', 'Muallaf', 'Riqab', 'Gharim', 'Fisabilillah', 'Ibnu Sabil'];
 
@@ -135,6 +136,78 @@ function initMustahikIPC() {
         } catch (error) {
             console.error('Error deleting mustahik:', error);
             return { success: false, message: 'Gagal menghapus mustahik: ' + error.message };
+        }
+    });
+
+    // Import Mustahik from Excel
+    ipcMain.handle('mustahik:import-excel', async () => {
+        try {
+            const session = getCurrentUserSession();
+            if (!session) {
+                return { success: false, message: 'Sesi habis. Silakan login kembali.' };
+            }
+
+            const { filePaths } = await dialog.showOpenDialog({
+                title: 'Pilih File Excel Data Mustahik',
+                properties: ['openFile'],
+                filters: [{ name: 'Excel Files', extensions: ['xlsx', 'xls'] }]
+            });
+
+            if (!filePaths || filePaths.length === 0) {
+                return { success: false, message: 'Impor dibatalkan.' };
+            }
+
+            const filePath = filePaths[0];
+            const workbook = XLSX.readFile(filePath);
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+            if (jsonData.length === 0) {
+                return { success: false, message: 'File Excel kosong atau tidak valid.' };
+            }
+
+            let importedCount = 0;
+            const insertStmt = db.prepare('INSERT INTO mustahik (nama, kategori, alamat) VALUES (?, ?, ?)');
+            
+            const runTransaction = db.transaction(() => {
+                jsonData.forEach(row => {
+                    let nama = '';
+                    let kategori = 'Miskin';
+                    let alamat = '';
+
+                    for (const key in row) {
+                        const lowerKey = key.toLowerCase().trim();
+                        if (lowerKey === 'nama' || lowerKey === 'nama lengkap') {
+                            nama = String(row[key]).trim();
+                        } else if (lowerKey === 'alamat') {
+                            alamat = String(row[key]).trim();
+                        } else if (lowerKey === 'kategori' || lowerKey === 'asnaf' || lowerKey === 'golongan') {
+                            const val = String(row[key]).trim();
+                            if (val) {
+                                const formattedVal = val.charAt(0).toUpperCase() + val.slice(1).toLowerCase();
+                                if (ASNAF_CATEGORIES.includes(formattedVal)) {
+                                    kategori = formattedVal;
+                                }
+                            }
+                        }
+                    }
+
+                    if (nama) {
+                        insertStmt.run(nama, kategori, alamat || null);
+                        importedCount++;
+                    }
+                });
+            });
+
+            runTransaction();
+
+            logAudit(session.id, session.username, `Mengimpor ${importedCount} data Mustahik dari Excel: ${require('path').basename(filePath)}`);
+
+            return { success: true, count: importedCount };
+        } catch (error) {
+            console.error('Error importing mustahik from excel:', error);
+            return { success: false, message: 'Gagal mengimpor data Mustahik: ' + error.message };
         }
     });
 }
