@@ -124,6 +124,40 @@
                         </div>
                     </div>
                     
+                    <!-- Zakat Mal Calculator Widget -->
+                    <div id="zakat-mal-calculator" style="display: none; padding: 12px; margin-bottom: 12px; border-radius: 8px; background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.2);">
+                        <div style="font-weight: 600; font-size: 13px; color: #d97706; margin-bottom: 8px; display: flex; align-items: center; gap: 4px;">
+                            <svg style="width: 16px; height: 16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                            Kalkulator Zakat Mal (Harta)
+                        </div>
+                        <div class="form-row-2">
+                            <div class="form-group">
+                                <label style="font-size: 11px; margin-bottom: 2px;">Harga Emas / gram (Rp)</label>
+                                <input type="number" id="calc-gold-price" class="form-control" style="padding: 6px 8px; font-size: 12px;" value="1300000">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size: 11px; margin-bottom: 2px;">Nisab 85g Emas (Rp)</label>
+                                <input type="text" id="calc-nisab-val" class="form-control" style="padding: 6px 8px; font-size: 12px; background-color: #f1f5f9; color: #64748b;" readonly>
+                            </div>
+                        </div>
+                        <div class="form-row-2" style="margin-top: 8px;">
+                            <div class="form-group">
+                                <label style="font-size: 11px; margin-bottom: 2px;">Total Harta Simpanan (Rp)</label>
+                                <input type="number" id="calc-harta" class="form-control" style="padding: 6px 8px; font-size: 12px;" placeholder="0">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size: 11px; margin-bottom: 2px;">Hutang / Jatuh Tempo (Rp)</label>
+                                <input type="number" id="calc-hutang" class="form-control" style="padding: 6px 8px; font-size: 12px;" value="0">
+                            </div>
+                        </div>
+                        <div style="margin-top: 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                            <div style="font-size: 12px;">
+                                Zakat Wajib (2.5%): <strong id="calc-zakat-result" style="color: #047857; font-size: 13px;">Rp0</strong>
+                            </div>
+                            <button type="button" class="btn btn-secondary" id="btn-apply-zakat-mal" style="padding: 4px 8px; font-size: 11px; border-color: #d97706; color: #d97706; background: transparent; height: auto;">Terapkan Hasil</button>
+                        </div>
+                    </div>
+                    
                     <div class="form-group">
                         <label for="jumlah_uang">Jumlah Uang (Rp)</label>
                         <input type="number" id="jumlah_uang" class="form-control" min="0" value="0">
@@ -213,7 +247,59 @@
                 }
             };
             document.getElementById('jumlah_jiwa').addEventListener('input', handleFitrahCalculation);
-            document.getElementById('jenis_zakat').addEventListener('change', handleFitrahCalculation);
+            
+            // Zakat Mal Calculator logic
+            const calcGoldPrice = document.getElementById('calc-gold-price');
+            const calcNisabVal = document.getElementById('calc-nisab-val');
+            const calcHarta = document.getElementById('calc-harta');
+            const calcHutang = document.getElementById('calc-hutang');
+            const calcZakatResult = document.getElementById('calc-zakat-result');
+            const btnApplyZakatMal = document.getElementById('btn-apply-zakat-mal');
+            const zakatMalWidget = document.getElementById('zakat-mal-calculator');
+            
+            let calculatedZakatMal = 0;
+            
+            const updateZakatMalCalc = () => {
+                const goldPrice = parseFloat(calcGoldPrice.value) || 0;
+                const nisab = goldPrice * 85;
+                calcNisabVal.value = formatIDR(nisab);
+                
+                const harta = parseFloat(calcHarta.value) || 0;
+                const hutang = parseFloat(calcHutang.value) || 0;
+                const netHarta = harta - hutang;
+                
+                if (netHarta >= nisab) {
+                    calculatedZakatMal = Math.round(netHarta * 0.025);
+                    calcZakatResult.innerText = formatIDR(calculatedZakatMal);
+                    calcZakatResult.style.color = '#047857'; // Green
+                } else {
+                    calculatedZakatMal = 0;
+                    calcZakatResult.innerText = 'Rp0 (Di bawah Nisab)';
+                    calcZakatResult.style.color = '#b91c1c'; // Red
+                }
+            };
+            
+            // Expose globally so openTransaksiModal can call it
+            window.updateZakatMalCalc = updateZakatMalCalc;
+            
+            calcGoldPrice.addEventListener('input', updateZakatMalCalc);
+            calcHarta.addEventListener('input', updateZakatMalCalc);
+            calcHutang.addEventListener('input', updateZakatMalCalc);
+            
+            btnApplyZakatMal.addEventListener('click', () => {
+                document.getElementById('jumlah_uang').value = calculatedZakatMal;
+                showToast('Hasil perhitungan zakat mal diterapkan.', 'success');
+            });
+            
+            document.getElementById('jenis_zakat').addEventListener('change', (e) => {
+                handleFitrahCalculation();
+                if (e.target.value === 'Zakat Mal') {
+                    zakatMalWidget.style.display = 'block';
+                    updateZakatMalCalc();
+                } else {
+                    zakatMalWidget.style.display = 'none';
+                }
+            });
             
             // Search Input handler
             let searchTimeout;
@@ -347,6 +433,16 @@
                     <td style="text-align: right; font-weight: 600; font-variant-numeric: tabular-nums;">${row.jumlah_beras > 0 ? formatBeras(row.jumlah_beras) : '-'}</td>
                     <td>${row.keterangan || '-'}</td>
                     <td style="text-align: center;">
+                        <button class="btn btn-secondary btn-small btn-wa" style="margin-right: 4px; background-color: #f0fdf4; color: #16a34a; border-color: #bbf7d0;"
+                            data-id="${row.id}" 
+                            data-tanggal="${row.tanggal}" 
+                            data-muzakki="${row.muzakki_nama || 'Umum/Anonim'}" 
+                            data-nohp="${row.muzakki_nohp || ''}" 
+                            data-jenis="${row.jenis_zakat}" 
+                            data-jiwa="${row.jumlah_jiwa}" 
+                            data-uang="${row.jumlah_uang}" 
+                            data-beras="${row.jumlah_beras}" 
+                            data-ket="${row.keterangan || ''}">WA</button>
                         <button class="btn btn-secondary btn-small btn-cetak" style="margin-right: 4px; background-color: #ecfdf5; color: #047857; border-color: #a7f3d0;" 
                             data-id="${row.id}" 
                             data-tanggal="${row.tanggal}" 
@@ -376,6 +472,45 @@
             document.getElementById('btn-next-page').disabled = page >= totalPages;
             
             // Hook buttons
+            document.querySelectorAll('.btn-wa').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const ds = e.target.dataset;
+                    let phone = ds.nohp;
+                    if (!phone || phone === 'null' || phone.trim() === '') {
+                        phone = prompt(`Masukkan Nomor WhatsApp Muzakki (${ds.muzakki}):`, '');
+                        if (phone === null) return;
+                        phone = phone.trim();
+                        if (!phone) {
+                            showToast('Nomor WhatsApp wajib diisi.', 'error');
+                            return;
+                        }
+                    }
+                    
+                    const uangVal = parseFloat(ds.uang) || 0;
+                    const berasVal = parseFloat(ds.beras) || 0;
+                    let bayarStr = '';
+                    if (uangVal > 0) bayarStr += formatIDR(uangVal);
+                    if (berasVal > 0) {
+                        if (bayarStr) bayarStr += ' & ';
+                        bayarStr += formatBeras(berasVal);
+                    }
+                    
+                    const formattedDate = formatDate(ds.tanggal);
+                    const transactionNo = String(ds.id).padStart(5, '0');
+                    
+                    const msg = `Halo ${ds.muzakki},\n\nTerima kasih telah menyalurkan Zakat, Infak, atau Sedekah Anda melalui *Masjid AmilDesk*.\n\nBerikut rincian tanda terima digital Anda:\n- *No Transaksi*: TRX-${transactionNo}\n- *Tanggal*: ${formattedDate}\n- *Jenis Penerimaan*: ${ds.jenis}\n- *Jumlah Jiwa*: ${ds.jiwa || 0}\n- *Jumlah Bayar*: ${bayarStr || '-'}\n- *Keterangan*: ${ds.ket || '-'}\n\n*Semoga Allah SWT melimpahkan berkah dan pahala yang berlipat ganda untuk Anda dan keluarga. Aamiin.*\n\n-- Pengurus Masjid AmilDesk --`;
+                    
+                    showLoading(true);
+                    const res = await window.api.sendWhatsApp(phone, msg);
+                    showLoading(false);
+                    if (res.success) {
+                        showToast('Berhasil membuka WhatsApp.', 'success');
+                    } else {
+                        showToast(res.message, 'error');
+                    }
+                });
+            });
+
             document.querySelectorAll('.btn-cetak').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const ds = e.target.dataset;
@@ -439,6 +574,17 @@
             document.getElementById('jumlah_beras').value = jumlah_beras;
             document.getElementById('keterangan').value = keterangan;
             
+            if (jenis_zakat === 'Zakat Mal') {
+                document.getElementById('zakat-mal-calculator').style.display = 'block';
+                document.getElementById('calc-harta').value = '';
+                document.getElementById('calc-hutang').value = '0';
+                if (typeof window.updateZakatMalCalc === 'function') {
+                    window.updateZakatMalCalc();
+                }
+            } else {
+                document.getElementById('zakat-mal-calculator').style.display = 'none';
+            }
+            
             if (id) {
                 document.getElementById('modal-title').innerText = 'Ubah Transaksi Zakat';
             } else {
@@ -450,6 +596,7 @@
         
         function closeTransaksiModal() {
             document.getElementById('transaksi-modal').classList.remove('open');
+            document.getElementById('zakat-mal-calculator').style.display = 'none';
             document.getElementById('transaksi-form').reset();
         }
         

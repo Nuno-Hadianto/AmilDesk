@@ -93,6 +93,16 @@ function initLaporanIPC() {
                 };
             });
             
+            // 3. Proportion of distribution by Mustahik Asnaf category
+            const proporsiMustahik = db.prepare(`
+                SELECT COALESCE(m.kategori, 'Lainnya') as asnaf, 
+                       SUM(d.jumlah_uang) as total_uang, 
+                       SUM(d.jumlah_beras) as total_beras 
+                FROM distribusi d
+                LEFT JOIN mustahik m ON d.mustahik_id = m.id
+                GROUP BY asnaf
+            `).all();
+            
             return {
                 success: true,
                 stats: {
@@ -109,7 +119,8 @@ function initLaporanIPC() {
                     },
                     charts: {
                         proporsiZakat,
-                        trendData: trendDataAligned
+                        trendData: trendDataAligned,
+                        proporsiMustahik
                     }
                 }
             };

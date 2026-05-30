@@ -110,6 +110,25 @@
                         </form>
                     </div>
 
+                    <!-- Left: Tutup Buku & Arsip (Admin Only) -->
+                    <div class="card admin-only" style="border-left: 4px solid var(--danger-color);">
+                        <div class="card-header">
+                            <div class="card-title" style="color: var(--danger-color); font-weight: 700;">Tutup Buku & Reset Tahun Buku</div>
+                        </div>
+                        
+                        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+                            Gunakan fitur ini saat pergantian tahun kepengurusan zakat (Tahun Baru Hijriah/Masehi). Sistem akan mencadangkan database Anda secara otomatis ke folder backup sebagai arsip, lalu mengosongkan seluruh tabel transaksi, distribusi, dan log aktivitas agar siap digunakan untuk kepanitiaan tahun baru.
+                        </p>
+                        
+                        <div style="background-color: #fffbeb; border: 1px solid #fde68a; color: #b45309; padding: 12px; border-radius: 8px; font-size: 12px; margin-bottom: 16px; line-height: 1.5;">
+                            <strong>PERINGATAN:</strong> Tindakan ini akan mengosongkan seluruh data transaksi dan log. Pastikan Anda telah mengunduh/mencetak seluruh laporan tahun berjalan terlebih dahulu!
+                        </div>
+                        
+                        <div style="text-align: right;">
+                            <button class="btn btn-danger btn-small" id="btn-tutup-buku" style="background-color: #ef4444; border-color: #ef4444; color: #fff;">Tutup Buku Sekarang</button>
+                        </div>
+                    </div>
+
                     <!-- Left: Ganti Kata Sandi Mandiri (All Users) -->
                     <div class="card">
                         <div class="card-header">
@@ -294,6 +313,18 @@
                     
                     // Hook backup creator
                     document.getElementById('btn-create-backup').addEventListener('click', createNewBackup);
+                    
+                    // Hook tutup buku
+                    document.getElementById('btn-tutup-buku').addEventListener('click', () => {
+                        showConfirm('Tutup Buku & Reset Transaksi', 'Apakah Anda yakin ingin melakukan Tutup Buku? Seluruh transaksi dan log tahun berjalan akan dikosongkan. Sistem akan membuat cadangan database secara otomatis sebelum proses dimulai.', () => {
+                            const doubleConfirm = prompt('Ketik "TUTUP BUKU" untuk mengonfirmasi tindakan pembersihan permanen ini:');
+                            if (doubleConfirm && doubleConfirm.toUpperCase() === 'TUTUP BUKU') {
+                                executeTutupBuku();
+                            } else {
+                                showToast('Tutup buku dibatalkan. Konfirmasi tidak sesuai.', 'info');
+                            }
+                        });
+                    });
                     
                     // Hook user management UI events
                     document.getElementById('btn-tambah-user').addEventListener('click', () => openUserModal());
@@ -667,6 +698,24 @@
             document.getElementById('audit-pagination-info').innerText = `Menampilkan ${startNum} - ${endNum} dari ${total} log`;
             document.getElementById('btn-prev-audit').disabled = page <= 1;
             document.getElementById('btn-next-audit').disabled = page >= totalPages;
+        }
+
+        async function executeTutupBuku() {
+            showLoading(true);
+            try {
+                const res = await window.api.tutupBuku();
+                showLoading(false);
+                if (res.success) {
+                    showToast(`Tutup Buku Berhasil! Database diarsipkan sebagai: ${res.archiveName}`, 'success');
+                    fetchBackups();
+                    fetchAuditLogs();
+                } else {
+                    showToast(res.message, 'error');
+                }
+            } catch (err) {
+                showLoading(false);
+                showToast('Gagal melakukan tutup buku: ' + err.message, 'error');
+            }
         }
     </script>
 </body>

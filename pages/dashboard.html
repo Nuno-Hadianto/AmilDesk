@@ -90,7 +90,7 @@
                 </div>
                 
                 <!-- Charts Grid -->
-                <div class="charts-grid" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px; margin-bottom: 24px;">
+                <div class="charts-grid" style="display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 24px; margin-bottom: 24px;">
                     <!-- Left: Transaction Trend Chart -->
                     <div class="card" style="padding: 20px; display: flex; flex-direction: column; margin-bottom: 0;">
                         <div class="card-header" style="margin-bottom: 16px; padding-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
@@ -105,7 +105,7 @@
                         </div>
                     </div>
 
-                    <!-- Right: Zakat Category Proportion Chart -->
+                    <!-- Middle: Zakat Category Proportion Chart -->
                     <div class="card" style="padding: 20px; display: flex; flex-direction: column; margin-bottom: 0;">
                         <div class="card-header" style="margin-bottom: 16px; padding-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
                             <div class="card-title">Proporsi Penerimaan</div>
@@ -116,6 +116,20 @@
                         </div>
                         <div style="flex-grow: 1; min-height: 280px; position: relative; display: flex; align-items: center; justify-content: center;">
                             <canvas id="proportionChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Right: Penyaluran per Asnaf Chart -->
+                    <div class="card" style="padding: 20px; display: flex; flex-direction: column; margin-bottom: 0;">
+                        <div class="card-header" style="margin-bottom: 16px; padding-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                            <div class="card-title">Penyaluran per Asnaf</div>
+                            <div style="display: flex; gap: 6px;">
+                                <button class="btn btn-primary btn-small" id="btn-asnaf-uang">Uang</button>
+                                <button class="btn btn-secondary btn-small" id="btn-asnaf-beras">Beras</button>
+                            </div>
+                        </div>
+                        <div style="flex-grow: 1; min-height: 280px; position: relative; display: flex; align-items: center; justify-content: center;">
+                            <canvas id="asnafChart"></canvas>
                         </div>
                     </div>
                 </div>
@@ -181,9 +195,11 @@
     <script>
         let trendChartInstance = null;
         let propChartInstance = null;
+        let asnafChartInstance = null;
         let currentChartData = null;
         let currentTrendMode = 'uang'; // 'uang' or 'beras'
         let currentPropMode = 'uang';  // 'uang' or 'beras'
+        let currentAsnafMode = 'uang'; // 'uang' or 'beras'
 
         document.addEventListener('DOMContentLoaded', async () => {
             // Wait slightly for common.js auth verification to finalize
@@ -220,6 +236,22 @@
                 document.getElementById('btn-prop-beras').className = 'btn btn-primary btn-small';
                 renderProportionChart();
             });
+
+            // Hook asnaf chart toggle buttons
+            document.getElementById('btn-asnaf-uang').addEventListener('click', () => {
+                if (currentAsnafMode === 'uang') return;
+                currentAsnafMode = 'uang';
+                document.getElementById('btn-asnaf-uang').className = 'btn btn-primary btn-small';
+                document.getElementById('btn-asnaf-beras').className = 'btn btn-secondary btn-small';
+                renderAsnafChart();
+            });
+            document.getElementById('btn-asnaf-beras').addEventListener('click', () => {
+                if (currentAsnafMode === 'beras') return;
+                currentAsnafMode = 'beras';
+                document.getElementById('btn-asnaf-uang').className = 'btn btn-secondary btn-small';
+                document.getElementById('btn-asnaf-beras').className = 'btn btn-primary btn-small';
+                renderAsnafChart();
+            });
         });
 
         async function loadDashboardData() {
@@ -248,6 +280,7 @@
                     currentChartData = stats.charts;
                     renderTrendChart();
                     renderProportionChart();
+                    renderAsnafChart();
                 } else {
                     showToast('Gagal memuat statistik: ' + res.message, 'error');
                 }
@@ -470,6 +503,126 @@
                                     const val = context.raw;
                                     const pct = ((val / total) * 100).toFixed(1) + '%';
                                     if (currentPropMode === 'uang') {
+                                        return `${context.label}: ${formatIDR(val)} (${pct})`;
+                                    } else {
+                                        return `${context.label}: ${formatBeras(val)} (${pct})`;
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    cutout: '65%'
+                }
+            });
+        }
+
+        function renderAsnafChart() {
+            if (!currentChartData || !currentChartData.proporsiMustahik) return;
+            
+            const rawData = currentChartData.proporsiMustahik;
+            const asnafCategories = ['Fakir', 'Miskin', 'Amil', 'Muallaf', 'Riqab', 'Gharim', 'Fisabilillah', 'Ibnu Sabil', 'Lainnya'];
+            const colors = [
+                '#dc2626', // Red
+                '#ea580c', // Orange
+                '#eab308', // Yellow
+                '#16a34a', // Green
+                '#2563eb', // Blue
+                '#4f46e5', // Indigo
+                '#7c3aed', // Purple
+                '#db2777', // Pink
+                '#64748b'  // Slate / Lainnya
+            ];
+            
+            // Map the categories
+            const dataValues = asnafCategories.map(asnaf => {
+                const item = rawData.find(d => d.asnaf === asnaf);
+                if (!item) return 0;
+                return currentAsnafMode === 'uang' ? (item.total_uang || 0) : (item.total_beras || 0);
+            });
+            
+            const total = dataValues.reduce((sum, val) => sum + val, 0);
+            const ctx = document.getElementById('asnafChart').getContext('2d');
+            
+            if (asnafChartInstance) {
+                asnafChartInstance.destroy();
+            }
+            
+            if (total === 0) {
+                asnafChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Belum ada data'],
+                        datasets: [{
+                            data: [1],
+                            backgroundColor: ['#cbd5e1'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: '#64748b' }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: () => 'Belum ada penyaluran zakat'
+                                }
+                            }
+                        }
+                    }
+                });
+                return;
+            }
+            
+            // Filter categories that have actual data to make it look clean
+            const activeIndices = [];
+            dataValues.forEach((val, idx) => {
+                if (val > 0) activeIndices.push(idx);
+            });
+            
+            const activeLabels = activeIndices.map(idx => asnafCategories[idx]);
+            const activeData = activeIndices.map(idx => dataValues[idx]);
+            const activeColors = activeIndices.map(idx => colors[idx]);
+            
+            asnafChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: activeLabels,
+                    datasets: [{
+                        data: activeData,
+                        backgroundColor: activeColors,
+                        borderWidth: 2,
+                        borderColor: '#ffffff',
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                color: '#64748b',
+                                font: {
+                                    family: 'inherit',
+                                    size: 11,
+                                    weight: '600'
+                                },
+                                padding: 12
+                            }
+                        },
+                        tooltip: {
+                            padding: 10,
+                            callbacks: {
+                                label: function(context) {
+                                    const val = context.raw;
+                                    const pct = ((val / total) * 100).toFixed(1) + '%';
+                                    if (currentAsnafMode === 'uang') {
                                         return `${context.label}: ${formatIDR(val)} (${pct})`;
                                     } else {
                                         return `${context.label}: ${formatBeras(val)} (${pct})`;

@@ -193,6 +193,49 @@ function initSettingsIPC() {
             return { success: false, message: 'Gagal menyimpan konfigurasi: ' + error.message };
         }
     });
+
+    // Tutup Buku & Reset Transaksi
+    ipcMain.handle('settings:tutup-buku', async () => {
+        try {
+            const session = getCurrentUserSession();
+            if (!session || session.role !== 'Admin') {
+                return { success: false, message: 'Akses ditolak. Hanya Admin yang dapat melakukan tutup buku.' };
+            }
+            
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            const hh = String(today.getHours()).padStart(2, '0');
+            const min = String(today.getMinutes()).padStart(2, '0');
+            const ss = String(today.getSeconds()).padStart(2, '0');
+            
+            const backupFilename = `amildesk_archive_${yyyy}${mm}${dd}_${hh}${min}${ss}.db`;
+            const destPath = path.join(backupDir, backupFilename);
+            
+            // Backup database
+            await dbModule.db.backup(destPath);
+            console.log('Archive backup created successfully at', destPath);
+            
+            // Empty tables
+            dbModule.db.transaction(() => {
+                dbModule.db.prepare('DELETE FROM transaksi').run();
+                dbModule.db.prepare('DELETE FROM distribusi').run();
+                dbModule.db.prepare('DELETE FROM audit_log').run();
+            })();
+            
+            // Run vacuum
+            dbModule.db.prepare('VACUUM').run();
+            
+            // Log this action to the fresh audit log table
+            logAudit(session.id, session.username, `Melakukan Tutup Buku dan Pengarsipan Lintas Tahun. Database diarsipkan sebagai ${backupFilename}`);
+            
+            return { success: true, archiveName: backupFilename };
+        } catch (error) {
+            console.error('Error during tutup buku:', error);
+            return { success: false, message: 'Gagal melakukan tutup buku: ' + error.message };
+        }
+    });
 }
 
 module.exports = {

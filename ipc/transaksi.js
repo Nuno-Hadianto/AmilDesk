@@ -1,4 +1,4 @@
-const { ipcMain } = require('electron');
+const { ipcMain, shell } = require('electron');
 const { db, logAudit } = require('../database/db');
 const { getCurrentUserSession } = require('./auth');
 
@@ -10,7 +10,7 @@ function initTransaksiIPC() {
             const searchPattern = `%${search.trim()}%`;
             
             let query = `
-                SELECT t.*, m.nama as muzakki_nama, u.username as user_nama 
+                SELECT t.*, m.nama as muzakki_nama, m.no_hp as muzakki_nohp, u.username as user_nama 
                 FROM transaksi t
                 LEFT JOIN muzakki m ON t.muzakki_id = m.id
                 LEFT JOIN users u ON t.created_by = u.id
@@ -166,6 +166,22 @@ function initTransaksiIPC() {
         } catch (error) {
             console.error('Error deleting transaction:', error);
             return { success: false, message: 'Gagal menghapus transaksi: ' + error.message };
+        }
+    });
+
+    // Send WhatsApp (open link)
+    ipcMain.handle('whatsapp:send', async (event, { phone, text }) => {
+        try {
+            let cleanPhone = phone.replace(/\D/g, '');
+            if (cleanPhone.startsWith('0')) {
+                cleanPhone = '62' + cleanPhone.substring(1);
+            }
+            const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
+            await shell.openExternal(url);
+            return { success: true };
+        } catch (error) {
+            console.error('Error opening WhatsApp link:', error);
+            return { success: false, message: 'Gagal membuka WhatsApp: ' + error.message };
         }
     });
 }

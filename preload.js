@@ -53,6 +53,10 @@ contextBridge.exposeInMainWorld('api', {
     // Configurations (Tarif Fitrah)
     getKonfigurasi: () => ipcRenderer.invoke('settings:get-konfigurasi'),
     saveKonfigurasi: (data) => ipcRenderer.invoke('settings:save-konfigurasi', data),
+    tutupBuku: () => ipcRenderer.invoke('settings:tutup-buku'),
+    
+    // WhatsApp Send
+    sendWhatsApp: (phone, text) => ipcRenderer.invoke('whatsapp:send', { phone, text }),
     
     // Excel Import
     importMuzakkiExcel: () => ipcRenderer.invoke('muzakki:import-excel'),
